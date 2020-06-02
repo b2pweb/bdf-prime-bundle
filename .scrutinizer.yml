@@ -1,0 +1,15 @@
+build:
+  nodes:
+    tests:
+      environment:
+        timezone: FR
+
+      services:
+        mysql: 5.7
+
+      tests:
+        override:
+          - command: composer run tests-with-coverage
+            coverage:
+              file: coverage.xml
+              format: clover

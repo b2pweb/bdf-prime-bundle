@@ -1,0 +1,256 @@
+parameters:
+  prime.configuration.class: 'Bdf\Prime\Configuration'
+  prime.logger.chain.class: 'Doctrine\DBAL\Logging\LoggerChain'
+  prime.logger.profiling.class: 'Doctrine\DBAL\Logging\DebugStack'
+  prime.types:
+    array:        'Bdf\Prime\Types\ArrayType'
+    array_object: 'Bdf\Prime\Types\ArrayObjectType'
+    boolean:      'Bdf\Prime\Types\BooleanType'
+    datetime:     'Bdf\Prime\Types\DateTimeType'
+    datetimez:    'Bdf\Prime\Types\DateTimeType'
+    date:         'Bdf\Prime\Types\DateType'
+    json:         'Bdf\Prime\Types\JsonType'
+    object:       'Bdf\Prime\Types\ObjectType'
+    time:         'Bdf\Prime\Types\TimeType'
+    timestamp:    'Bdf\Prime\Types\TimestampType'
+
+services:
+# Global factory, configurator
+  prime.configurator:
+    class: 'Bdf\PrimeBundle\Configurator\PrimeConfigurator'
+    arguments: ['@service_container']
+
+  prime.migration.factory:
+    class: 'Bdf\PrimeBundle\Migration\DbVersionRepositoryFactory'
+    arguments: ['@Bdf\Prime\ServiceLocator']
+
+
+# Prime
+  prime:
+    alias: 'Bdf\Prime\ServiceLocator'
+    public: true
+
+  Bdf\Prime\ServiceLocator:
+    public: true
+    configurator: ['@prime.configurator', 'configurePrime']
+    class: 'Bdf\Prime\ServiceLocator'
+    arguments:
+      - '@Bdf\Prime\ConnectionManager'
+      - '@Bdf\Prime\Mapper\MapperFactory'
+      - '@Bdf\Prime\Entity\Instantiator\InstantiatorInterface'
+    calls:
+      - [setDI, ['@service_container']]
+    tags:
+      - { name: 'kernel.reset', method: 'clearRepositories' }
+
+
+# Connection
+  Bdf\Prime\ConnectionManager:
+    class: 'Bdf\Prime\ConnectionManager'
+    arguments:
+      - '@Bdf\Prime\Configuration'
+    calls:
+      - [setDefaultConnection, ['%prime.default_connection%']]
+
+  Bdf\Prime\Configuration:
+    class: 'Bdf\Prime\Configuration'
+    abstract: true
+
+
+# Mapper
+  Bdf\Prime\Mapper\MapperFactory:
+    class: 'Bdf\Prime\Mapper\MapperFactory'
+    arguments:
+      - '@Bdf\Prime\Mapper\NameResolver\ResolverInterface'
+
+  Bdf\Prime\Mapper\NameResolver\ResolverInterface:
+    class: 'Bdf\Prime\Mapper\NameResolver\SuffixResolver'
+
+
+# Hydrator
+  Bdf\Prime\Entity\Instantiator\InstantiatorInterface:
+    class: 'Bdf\Prime\Entity\Instantiator\RegistryInstantiator'
+
+
+# Serializer
+  prime.serializer.normalizer.collection:
+    class: 'Bdf\Prime\Serializer\PrimeCollectionNormalizer'
+    arguments: ['@prime']
+    tags:
+      - {name: 'bdf_serializer.normalizer'}
+
+  prime.serializer.normalizer.paginator:
+    class: 'Bdf\Prime\Serializer\PaginatorNormalizer'
+    tags:
+      - {name: 'bdf_serializer.normalizer'}
+
+
+# Types
+  Bdf\Prime\Types\TypesRegistryInterface:
+    class: Bdf\Prime\Types\TypesRegistry
+    arguments:
+      - '%prime.types%'
+
+
+# Logger
+  prime.logger:
+    class: Bdf\Prime\Logger\PsrDecorator
+    arguments:
+      - '@?logger'
+    tags:
+      - { name: 'monolog.logger', channel: 'prime' }
+
+  prime.logger.chain:
+      class: '%prime.logger.chain.class%'
+      arguments:
+        - ['@prime.logger']
+
+  prime.logger.profiling:
+    class: '%prime.logger.profiling.class%'
+
+
+# Cache
+  Bdf\Prime\Cache\CacheInterface: '@Bdf\Prime\Cache\ArrayCache'
+  Bdf\Prime\Cache\ArrayCache:
+    class: Bdf\Prime\Cache\ArrayCache
+
+
+# Migration
+  prime.migration: '@Bdf\Prime\Migration\MigrationManager'
+  Bdf\Prime\Migration\MigrationManager:
+    class: 'Bdf\Prime\Migration\MigrationManager'
+    public: true
+    arguments:
+      - '@Bdf\Prime\Migration\VersionRepositoryInterface'
+      - '@Bdf\Prime\Migration\MigrationProviderInterface'
+
+  Bdf\Prime\Migration\VersionRepositoryInterface:
+    factory: ['@prime.migration.factory', create]
+    arguments:
+      - '%prime.migration.table%'
+      - '%prime.migration.connection%'
+
+  Bdf\Prime\Migration\MigrationProviderInterface:
+    class: 'Bdf\Prime\Migration\Provider\FileMigrationProvider'
+    arguments:
+      - '@Bdf\Prime\Migration\MigrationFactoryInterface'
+      - '%prime.migration.path%'
+
+  Bdf\Prime\Migration\MigrationFactoryInterface:
+    class: 'Bdf\Prime\Migration\Provider\MigrationFactory'
+    arguments: ['@service_container']
+
+
+# Commands
+  prime.database_create_command:
+    class: 'Bdf\Prime\Console\CreateDatabaseCommand'
+    arguments:
+      - '@prime'
+    tags:
+      - { name: 'console.command' }
+
+  prime.database_drop_command:
+    class: 'Bdf\Prime\Console\DropDatabaseCommand'
+    arguments:
+      - '@prime'
+    tags:
+      - { name: 'console.command' }
+
+  prime.entity_command:
+    class: 'Bdf\Prime\Console\EntityCommand'
+    arguments:
+      - '@prime'
+    tags:
+      - { name: 'console.command' }
+
+  prime.graph_command:
+    class: 'Bdf\Prime\Console\GraphCommand'
+    arguments:
+      - '@prime'
+    tags:
+      - { name: 'console.command' }
+
+  prime.hydrator_command:
+    class: 'Bdf\Prime\Console\HydratorGenerationCommand'
+    arguments:
+      - '@prime'
+      - '%prime.hydrators%'
+    tags:
+      - { name: 'console.command' }
+
+  prime.mapper_command:
+    class: 'Bdf\Prime\Console\MapperCommand'
+    arguments:
+      - '@prime'
+    tags:
+      - { name: 'console.command' }
+
+  prime.upgrade_command:
+    class: 'Bdf\Prime\Console\UpgraderCommand'
+    arguments:
+      - '@prime'
+    tags:
+      - { name: 'console.command' }
+
+  prime.migration.init:
+    class: 'Bdf\Prime\Migration\Console\InitCommand'
+    arguments:
+      - '@prime.migration'
+    tags:
+      - { name: 'console.command' }
+
+  prime.migration.status:
+    class: 'Bdf\Prime\Migration\Console\StatusCommand'
+    arguments:
+      - '@prime.migration'
+    tags:
+      - { name: 'console.command' }
+
+  prime.migration.check:
+    class: 'Bdf\Prime\Migration\Console\CheckCommand'
+    arguments:
+      - '@prime.migration'
+    tags:
+      - { name: 'console.command' }
+
+  prime.migration.generate:
+    class: 'Bdf\Prime\Migration\Console\GenerateCommand'
+    arguments:
+      - '@prime.migration'
+    tags:
+      - { name: 'console.command' }
+
+  prime.migration.up:
+    class: 'Bdf\Prime\Migration\Console\UpCommand'
+    arguments:
+      - '@prime.migration'
+    tags:
+      - { name: 'console.command' }
+
+  prime.migration.down:
+    class: 'Bdf\Prime\Migration\Console\DownCommand'
+    arguments:
+      - '@prime.migration'
+    tags:
+      - { name: 'console.command' }
+
+  prime.migration.migrate:
+    class: 'Bdf\Prime\Migration\Console\MigrateCommand'
+    arguments:
+      - '@prime.migration'
+    tags:
+      - { name: 'console.command' }
+
+  prime.migration.rollback:
+    class: 'Bdf\Prime\Migration\Console\RollbackCommand'
+    arguments:
+      - '@prime.migration'
+    tags:
+      - { name: 'console.command' }
+
+  prime.migration.redo:
+    class: 'Bdf\Prime\Migration\Console\RedoCommand'
+    arguments:
+      - '@prime.migration'
+    tags:
+      - { name: 'console.command' }
