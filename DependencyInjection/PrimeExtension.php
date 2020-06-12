@@ -3,9 +3,17 @@
 namespace Bdf\PrimeBundle\DependencyInjection;
 
 use Bdf\Prime\Configuration as PrimeConfiguration;
+use Bdf\Prime\Connection\ConnectionRegistry;
+use Bdf\Prime\Connection\Factory\ChainFactory;
+use Bdf\Prime\Connection\Factory\ConnectionFactory;
+use Bdf\Prime\Connection\Factory\ConnectionFactoryInterface;
+use Bdf\Prime\Connection\Factory\MasterSlaveConnectionFactory;
+use Bdf\Prime\Connection\Factory\ShardingConnectionFactory;
+use Bdf\Prime\Mapper\MapperFactory;
 use Bdf\Prime\Types\TypesRegistryInterface;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\Compiler\PriorityTaggedServiceTrait;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -17,6 +25,8 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class PrimeExtension extends Extension
 {
+    use PriorityTaggedServiceTrait;
+
     /**
      * {@inheritDoc}
      */
@@ -28,10 +38,8 @@ class PrimeExtension extends Extension
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('prime.yaml');
 
-        foreach ($config['connections'] as $name => $options) {
-            $config['connections'][$name] = $this->cleanConnectionOptions($options);
-        }
-
+        $this->configureConnection($config, $container);
+        $this->configureMapperCache($config, $container);
         $this->configureConfiguration($config, $container);
         $this->configureSerializer($config, $container);
 
@@ -47,6 +55,44 @@ class PrimeExtension extends Extension
      * @param array $config
      * @param ContainerBuilder $container
      */
+    public function configureConnection(array $config, ContainerBuilder $container)
+    {
+        foreach ($config['connections'] as $name => $options) {
+            $options = $this->cleanConnectionOptions($options);
+
+            if (isset($options['read']) && !$container->hasDefinition(MasterSlaveConnectionFactory::class)) {
+                $container->register(MasterSlaveConnectionFactory::class, MasterSlaveConnectionFactory::class)
+                    ->addTag('bdf_prime.connection_factory', ['priority' => -255])
+                    ->addArgument(new Reference(ConnectionFactory::class));
+            }
+
+            if (isset($options['shards']) && !$container->hasDefinition(ShardingConnectionFactory::class)) {
+                $container->register(ShardingConnectionFactory::class, ShardingConnectionFactory::class)
+                    ->addTag('bdf_prime.connection_factory', ['priority' => -256])
+                    ->addArgument(new Reference(ConnectionFactory::class));
+            }
+        }
+
+        $factories = $this->findAndSortTaggedServices('bdf_prime.connection_factory', $container);
+
+        // NOTE: for the case 0, the prime config use ConnectionFactory as default
+        if (count($factories) === 1) {
+            $connectionFactory = current($factories);
+            $container->setAlias(ConnectionFactoryInterface::class, (string)$connectionFactory);
+        } else {
+            $connectionFactory = $container->getDefinition(ChainFactory::class);
+            $connectionFactory->replaceArgument(0, $factories);
+            $container->setAlias(ConnectionFactoryInterface::class, ChainFactory::class);
+        }
+
+        $registry = $container->getDefinition(ConnectionRegistry::class);
+        $registry->replaceArgument(0, $config['connections']);
+    }
+
+    /**
+     * @param array $config
+     * @param ContainerBuilder $container
+     */
     public function configureSerializer(array $config, ContainerBuilder $container)
     {
         if (!isset($config['serializer'])) {
@@ -55,6 +101,31 @@ class PrimeExtension extends Extension
 
         $prime = $container->findDefinition('prime');
         $prime->addMethodCall('setSerializer', [new Reference($config['serializer'])]);
+    }
+
+    /**
+     * @param array $config
+     * @param ContainerBuilder $container
+     */
+    public function configureMapperCache(array $config, ContainerBuilder $container)
+    {
+        $definition = $container->getDefinition(MapperFactory::class);
+
+        if (isset($config['cache']['query'])) {
+            $ref = $this->createCacheReference('prime.cache.query', $config['cache']['query'], $container);
+
+            if ($ref !== null) {
+                $definition->replaceArgument(2, $ref);
+            }
+        }
+
+        if (isset($config['cache']['metadata'])) {
+            $ref = $this->createCacheReference('prime.cache.metadata', $config['cache']['metadata'], $container);
+
+            if ($ref !== null) {
+                $definition->replaceArgument(1, $ref);
+            }
+        }
     }
 
     /**
@@ -76,29 +147,12 @@ class PrimeExtension extends Extension
             $configuration->addMethodCall('setAutoCommit', [$config['auto_commit']]);
         }
 
-        if (isset($config['cache']['query'])) {
-            $ref = $this->createCacheReference('prime.cache.query', $config['cache']['query'], $container);
-
-            if ($ref !== null) {
-                $configuration->addMethodCall('setResultCache', [$ref]);
-            }
-        }
-
-        if (isset($config['cache']['metadata'])) {
-            $ref = $this->createCacheReference('prime.cache.metadata', $config['cache']['metadata'], $container);
-
-            if ($ref !== null) {
-                $configuration->addMethodCall('setMetadataCache', [$ref]);
-            }
-        }
-
         $logger = null;
         if ($config['logging']) {
             $logger = new Reference('prime.logger');
         }
 
         if ($config['profiling']) {
-            // TODO Manage DataCollector !
             $profilingLogger = new Reference('prime.logger.profiling');
 
             if ($logger !== null) {
@@ -129,9 +183,11 @@ class PrimeExtension extends Extension
         }
 
         if (isset($config['pool'])) {
-            $definition = $container->register($namespace, Psr16Cache::class);
-            $definition->addArgument(new Reference($config['pool']));
-            $definition->setPrivate(true);
+            if (!$container->has($namespace)) {
+                $definition = $container->register($namespace, Psr16Cache::class);
+                $definition->addArgument(new Reference($config['pool']));
+                $definition->setPrivate(true);
+            }
 
             return new Reference($namespace);
         }

@@ -15,7 +15,7 @@ parameters:
     timestamp:    'Bdf\Prime\Types\TimestampType'
 
 services:
-# Global factory, configurator
+  # Global factory, configurator
   prime.configurator:
     class: 'Bdf\PrimeBundle\Configurator\PrimeConfigurator'
     arguments: ['@service_container']
@@ -25,7 +25,7 @@ services:
     arguments: ['@Bdf\Prime\ServiceLocator']
 
 
-# Prime
+  # Prime
   prime:
     alias: 'Bdf\Prime\ServiceLocator'
     public: true
@@ -44,35 +44,60 @@ services:
       - { name: 'kernel.reset', method: 'clearRepositories' }
 
 
-# Connection
+  # Connection
   Bdf\Prime\ConnectionManager:
     class: 'Bdf\Prime\ConnectionManager'
     arguments:
-      - '@Bdf\Prime\Configuration'
+      - '@Bdf\Prime\ConnectionRegistryInterface'
     calls:
       - [setDefaultConnection, ['%prime.default_connection%']]
+
+  Bdf\Prime\ConnectionRegistryInterface:
+    alias: 'Bdf\Prime\Connection\ConnectionRegistry'
+
+  Bdf\Prime\Connection\ConnectionRegistry:
+    class: 'Bdf\Prime\Connection\ConnectionRegistry'
+    arguments:
+      - []
+      - '@Bdf\Connection\Factory\ConnectionFactoryInterface'
+      - '@Bdf\Prime\Configuration'
+
+  Bdf\Connection\Factory\ConnectionFactoryInterface:
+    alias: 'Bdf\Prime\Connection\Factory\ConnectionFactory'
+
+  Bdf\Prime\Connection\Factory\ChainFactory:
+    class: 'Bdf\Prime\Connection\Factory\ChainFactory'
+    arguments:
+      - []
+
+  Bdf\Prime\Connection\Factory\ConnectionFactory:
+    class: 'Bdf\Prime\Connection\Factory\ConnectionFactory'
+    tags:
+      - {name: 'bdf_prime.connection_factory', priority: -1000 }
 
   Bdf\Prime\Configuration:
     class: 'Bdf\Prime\Configuration'
     abstract: true
 
 
-# Mapper
+  # Mapper
   Bdf\Prime\Mapper\MapperFactory:
     class: 'Bdf\Prime\Mapper\MapperFactory'
     arguments:
       - '@Bdf\Prime\Mapper\NameResolver\ResolverInterface'
+      - null
+      - null
 
   Bdf\Prime\Mapper\NameResolver\ResolverInterface:
     class: 'Bdf\Prime\Mapper\NameResolver\SuffixResolver'
 
 
-# Hydrator
+  # Hydrator
   Bdf\Prime\Entity\Instantiator\InstantiatorInterface:
     class: 'Bdf\Prime\Entity\Instantiator\RegistryInstantiator'
 
 
-# Serializer
+  # Serializer
   prime.serializer.normalizer.collection:
     class: 'Bdf\Prime\Serializer\PrimeCollectionNormalizer'
     arguments: ['@prime']
@@ -85,14 +110,14 @@ services:
       - {name: 'bdf_serializer.normalizer'}
 
 
-# Types
+  # Types
   Bdf\Prime\Types\TypesRegistryInterface:
     class: Bdf\Prime\Types\TypesRegistry
     arguments:
       - '%prime.types%'
 
 
-# Logger
+  # Logger
   prime.logger:
     class: Bdf\Prime\Logger\PsrDecorator
     arguments:
@@ -101,21 +126,21 @@ services:
       - { name: 'monolog.logger', channel: 'prime' }
 
   prime.logger.chain:
-      class: '%prime.logger.chain.class%'
-      arguments:
-        - ['@prime.logger']
+    class: '%prime.logger.chain.class%'
+    arguments:
+      - ['@prime.logger']
 
   prime.logger.profiling:
     class: '%prime.logger.profiling.class%'
 
 
-# Cache
+  # Cache
   Bdf\Prime\Cache\CacheInterface: '@Bdf\Prime\Cache\ArrayCache'
   Bdf\Prime\Cache\ArrayCache:
     class: Bdf\Prime\Cache\ArrayCache
 
 
-# Migration
+  # Migration
   prime.migration: '@Bdf\Prime\Migration\MigrationManager'
   Bdf\Prime\Migration\MigrationManager:
     class: 'Bdf\Prime\Migration\MigrationManager'
@@ -141,18 +166,20 @@ services:
     arguments: ['@service_container']
 
 
-# Commands
+  # Commands
   prime.database_create_command:
     class: 'Bdf\Prime\Console\CreateDatabaseCommand'
     arguments:
-      - '@prime'
+      - '@Bdf\Prime\ConnectionRegistryInterface'
+      - '@Bdf\Connection\Factory\ConnectionFactoryInterface'
     tags:
       - { name: 'console.command' }
 
   prime.database_drop_command:
     class: 'Bdf\Prime\Console\DropDatabaseCommand'
     arguments:
-      - '@prime'
+      - '@Bdf\Prime\ConnectionRegistryInterface'
+      - '@Bdf\Connection\Factory\ConnectionFactoryInterface'
     tags:
       - { name: 'console.command' }
 
