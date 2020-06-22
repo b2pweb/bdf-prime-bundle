@@ -2,6 +2,7 @@
 
 namespace Bdf\PrimeBundle\DependencyInjection;
 
+use Bdf\Dsn\Dsn;
 use Bdf\Prime\Configuration as PrimeConfiguration;
 use Bdf\Prime\Connection\ConnectionRegistry;
 use Bdf\Prime\Connection\Factory\ChainFactory;
@@ -60,13 +61,13 @@ class PrimeExtension extends Extension
         foreach ($config['connections'] as $name => $options) {
             $options = $this->cleanConnectionOptions($options);
 
-            if (isset($options['read']) && !$container->hasDefinition(MasterSlaveConnectionFactory::class)) {
+            if (!$container->hasDefinition(MasterSlaveConnectionFactory::class) && $this->hasConnectionOption('read', $options)) {
                 $container->register(MasterSlaveConnectionFactory::class, MasterSlaveConnectionFactory::class)
                     ->addTag('bdf_prime.connection_factory', ['priority' => -255])
                     ->addArgument(new Reference(ConnectionFactory::class));
             }
 
-            if (isset($options['shards']) && !$container->hasDefinition(ShardingConnectionFactory::class)) {
+            if (!$container->hasDefinition(ShardingConnectionFactory::class) && $this->hasConnectionOption('shards', $options)) {
                 $container->register(ShardingConnectionFactory::class, ShardingConnectionFactory::class)
                     ->addTag('bdf_prime.connection_factory', ['priority' => -256])
                     ->addArgument(new Reference(ConnectionFactory::class));
@@ -87,6 +88,28 @@ class PrimeExtension extends Extension
 
         $registry = $container->getDefinition(ConnectionRegistry::class);
         $registry->replaceArgument(0, $config['connections']);
+    }
+
+    /**
+     * @param string $option
+     * @param array $options
+     * @return bool
+     */
+    private function hasConnectionOption(string $option, array $options): bool
+    {
+        if (isset($options[$option])) {
+            return true;
+        }
+
+        if (!isset($options['url'])) {
+            return false;
+        }
+
+        try {
+            return Dsn::parse($options['url'])->query($option) !== null;
+        } catch (\Throwable $exception) {
+            return false;
+        }
     }
 
     /**
