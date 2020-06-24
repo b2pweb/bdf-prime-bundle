@@ -38,6 +38,7 @@ class PrimeExtension extends Extension
 
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('prime.yaml');
+        $loader->load('collector.yaml');
 
         $this->configureConnection($config, $container);
         $this->configureMapperCache($config, $container);

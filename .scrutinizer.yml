@@ -2,7 +2,7 @@ build:
   nodes:
     tests:
       environment:
-        timezone: FR
+        timezone: Europe/Paris
 
       services:
         mysql: 5.7
