@@ -1,0 +1,15 @@
+framework:
+  profiler:
+    enabled: true
+web_profiler:
+  toolbar: true
+prime:
+  activerecord: true
+  default_connection: 'test'
+  connections:
+    test: 'sqlite::memory:'
+
+  migration:
+    connection: 'test'
+    path: '%kernel.project_dir%/src/Migration'
+  profiling: true

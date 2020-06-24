@@ -1,0 +1,19 @@
+services:
+  Bdf\PrimeBundle\Collector\PrimeDataCollector:
+    public: true
+    class: 'Bdf\PrimeBundle\Collector\PrimeDataCollector'
+    arguments: ['@Bdf\Prime\Persistence\PrimeManagerRegistry', false]
+    calls:
+      - ['addLogger', ['', '@prime.logger.profiling']]
+    tags:
+      - { name: 'data_collector', template: '@Doctrine/Collector/db.html.twig', id: 'db', 'priority': 250 }
+
+  Doctrine\Bundle\DoctrineBundle\Twig\DoctrineExtension:
+    class: 'Doctrine\Bundle\DoctrineBundle\Twig\DoctrineExtension'
+    tags:
+      - { name: 'twig.extension' }
+
+  Bdf\Prime\Persistence\PrimeManagerRegistry:
+    class: 'Bdf\Prime\Persistence\PrimeManagerRegistry'
+    arguments: ['@Bdf\Prime\ServiceLocator']
+    public: true
