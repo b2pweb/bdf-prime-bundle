@@ -3,7 +3,6 @@
 namespace Bdf\PrimeBundle\Collector;
 
 use Doctrine\Bundle\DoctrineBundle\DataCollector\DoctrineDataCollector;
-use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -15,7 +14,7 @@ class PrimeDataCollector extends DoctrineDataCollector
     /**
      * {@inheritdoc}
      */
-    public function collect(Request $request, Response $response, Exception $exception = null)
+    public function collect(Request $request, Response $response, \Throwable $exception = null)
     {
         \Symfony\Bridge\Doctrine\DataCollector\DoctrineDataCollector::collect($request, $response, $exception);
 
