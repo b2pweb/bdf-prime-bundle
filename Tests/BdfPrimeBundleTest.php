@@ -17,6 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Kernel;
+use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
 /**
  * BdfSerializerBundleTest
@@ -96,9 +97,14 @@ class BdfPrimeBundleTest extends TestCase
                 ];
             }
 
-            public function configureContainer(ContainerConfigurator $c)
+            public function configureContainer(ContainerConfigurator $c): void
             {
                 $c->import(__DIR__.'/sharding.yaml');
+            }
+
+            protected function configureRoutes(RoutingConfigurator $routes): void
+            {
+
             }
         };
 
