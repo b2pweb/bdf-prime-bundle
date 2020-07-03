@@ -63,7 +63,7 @@ services:
       - '@Bdf\Prime\Configuration'
 
   Bdf\Connection\Factory\ConnectionFactoryInterface:
-    alias: 'Bdf\Prime\Connection\Factory\ConnectionFactory'
+    alias: 'Bdf\Prime\Connection\Factory\ChainFactory'
 
   Bdf\Prime\Connection\Factory\ChainFactory:
     class: 'Bdf\Prime\Connection\Factory\ChainFactory'

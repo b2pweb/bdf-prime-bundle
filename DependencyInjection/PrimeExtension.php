@@ -16,6 +16,7 @@ use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Compiler\PriorityTaggedServiceTrait;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -59,7 +60,7 @@ class PrimeExtension extends Extension
      */
     public function configureConnection(array $config, ContainerBuilder $container)
     {
-        foreach ($config['connections'] as $name => $options) {
+        foreach ($config['connections'] as $name => &$options) {
             $options = $this->cleanConnectionOptions($options);
 
             if (!$container->hasDefinition(MasterSlaveConnectionFactory::class) && $this->hasConnectionOption('read', $options)) {
@@ -77,15 +78,8 @@ class PrimeExtension extends Extension
 
         $factories = $this->findAndSortTaggedServices('bdf_prime.connection_factory', $container);
 
-        // NOTE: for the case 0, the prime config use ConnectionFactory as default
-        if (count($factories) === 1) {
-            $connectionFactory = current($factories);
-            $container->setAlias(ConnectionFactoryInterface::class, (string)$connectionFactory);
-        } else {
-            $connectionFactory = $container->getDefinition(ChainFactory::class);
-            $connectionFactory->replaceArgument(0, $factories);
-            $container->setAlias(ConnectionFactoryInterface::class, ChainFactory::class);
-        }
+        $connectionFactory = $container->getDefinition(ChainFactory::class);
+        $connectionFactory->replaceArgument(0, $factories);
 
         $registry = $container->getDefinition(ConnectionRegistry::class);
         $registry->replaceArgument(0, $config['connections']);

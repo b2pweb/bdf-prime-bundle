@@ -7,11 +7,16 @@ require_once __DIR__.'/TestKernel.php';
 use Bdf\Prime\Connection\SimpleConnection;
 use Bdf\Prime\Migration\MigrationManager;
 use Bdf\Prime\ServiceLocator;
+use Bdf\Prime\Sharding\ShardingConnection;
+use Bdf\Prime\Sharding\ShardingQuery;
 use Bdf\PrimeBundle\Collector\PrimeDataCollector;
 use Bdf\PrimeBundle\PrimeBundle;
 use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Kernel;
 
 /**
  * BdfSerializerBundleTest
@@ -73,5 +78,35 @@ class BdfPrimeBundleTest extends TestCase
 
         $this->assertEquals([$entity], \TestEntity::all());
         $this->assertEquals($entity, \TestEntity::where('name', 'foo')->first());
+    }
+
+    /**
+     *
+     */
+    public function test_sharding_connection()
+    {
+        $kernel = new class('test', true) extends Kernel {
+            use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+
+            public function registerBundles()
+            {
+                return [
+                    new FrameworkBundle(),
+                    new PrimeBundle(),
+                ];
+            }
+
+            public function configureContainer(ContainerConfigurator $c)
+            {
+                $c->import(__DIR__.'/sharding.yaml');
+            }
+        };
+
+        $kernel->boot();
+
+        /** @var ServiceLocator $prime */
+        $prime = $kernel->getContainer()->get(ServiceLocator::class);
+        $this->assertInstanceOf(ShardingConnection::class, $prime->connection('test'));
+        $this->assertInstanceOf(ShardingQuery::class, $prime->connection('test')->builder());
     }
 }
