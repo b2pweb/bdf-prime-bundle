@@ -1,0 +1,14 @@
+prime:
+  activerecord: true
+  default_connection: 'test'
+  connections:
+    test:
+      url: 'sqlite::memory:'
+      distribution_key: my_key
+      shards:
+        - {name: shard1, url: 'sqlite::memory:'}
+        - {name: shard2, url: 'sqlite::memory:'}
+
+  migration:
+    connection: 'test'
+    path: '%kernel.project_dir%/src/Migration'

@@ -13,11 +13,11 @@ use Bdf\PrimeBundle\Collector\PrimeDataCollector;
 use Bdf\PrimeBundle\PrimeBundle;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
+use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Kernel;
-use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
+use Symfony\Component\Routing\RouteCollectionBuilder;
 
 /**
  * BdfSerializerBundleTest
@@ -97,15 +97,12 @@ class BdfPrimeBundleTest extends TestCase
                 ];
             }
 
-            public function configureContainer(ContainerConfigurator $c): void
+            protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)
             {
-                $c->import(__DIR__.'/sharding.yaml');
+                $loader->import(__DIR__.'/sharding.yaml');
             }
 
-            protected function configureRoutes(RoutingConfigurator $routes): void
-            {
-
-            }
+            protected function configureRoutes(RouteCollectionBuilder $routes) { }
         };
 
         $kernel->boot();
