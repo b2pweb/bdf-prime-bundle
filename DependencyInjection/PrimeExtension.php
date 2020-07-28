@@ -3,6 +3,7 @@
 namespace Bdf\PrimeBundle\DependencyInjection;
 
 use Bdf\Dsn\Dsn;
+use Bdf\Prime\Cache\DoctrineCacheAdapter;
 use Bdf\Prime\Configuration as PrimeConfiguration;
 use Bdf\Prime\Connection\ConnectionRegistry;
 use Bdf\Prime\Connection\Factory\ChainFactory;
@@ -12,6 +13,7 @@ use Bdf\Prime\Connection\Factory\MasterSlaveConnectionFactory;
 use Bdf\Prime\Connection\Factory\ShardingConnectionFactory;
 use Bdf\Prime\Mapper\MapperFactory;
 use Bdf\Prime\Types\TypesRegistryInterface;
+use Doctrine\Common\Cache\FilesystemCache;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Compiler\PriorityTaggedServiceTrait;
@@ -130,7 +132,7 @@ class PrimeExtension extends Extension
         $definition = $container->getDefinition(MapperFactory::class);
 
         if (isset($config['cache']['query'])) {
-            $ref = $this->createCacheReference('prime.cache.query', $config['cache']['query'], $container);
+            $ref = $this->createResultCacheReference('prime.cache.query', $config['cache']['query'], $container);
 
             if ($ref !== null) {
                 $definition->replaceArgument(2, $ref);
@@ -211,6 +213,60 @@ class PrimeExtension extends Extension
         }
 
         return null;
+    }
+
+    /**
+     * Create the cache result service
+     *
+     * @param array $config
+     * @param ContainerBuilder $container
+     *
+     * @return null|Reference
+     */
+    private function createResultCacheReference(string $namespace, array $config, ContainerBuilder $container)
+    {
+        if (isset($config['service'])) {
+            return new Reference($config['service']);
+        }
+
+        if (isset($config['provider'])) {
+            if (!$container->has($namespace)) {
+                $definition = $container->register($namespace, DoctrineCacheAdapter::class);
+                $definition->addArgument($this->createDoctrineCacheProvider($namespace, $config['provider'], $container));
+                $definition->setPrivate(true);
+            }
+
+            return new Reference($namespace);
+        }
+
+        return null;
+    }
+
+    /**
+     * Create the doctrine cache provider service
+     *
+     * @param string $namespace
+     * @param array $config
+     * @param ContainerBuilder $container
+     *
+     * @return Reference
+     */
+    private function createDoctrineCacheProvider(string $namespace, array $config, ContainerBuilder $container): Reference
+    {
+        if (isset($config['service'])) {
+            return new Reference($config['service']);
+        }
+
+        if (isset($config['filesystem'])) {
+            $container
+                ->register($namespace.'.doctrine-provider', FilesystemCache::class)
+                ->addArgument($config['filesystem'])
+            ;
+
+            return new Reference($namespace.'.doctrine-provider');
+        }
+
+        throw new InvalidArgumentException('Invalid result cache configuration');
     }
 
     /**

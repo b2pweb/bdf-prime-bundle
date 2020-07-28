@@ -1,0 +1,14 @@
+prime:
+  activerecord: true
+  default_connection: 'test'
+  cache:
+    query:
+      provider:
+        filesystem: './tmp/cache'
+  connections:
+    test:
+      url: 'sqlite::memory:'
+
+  migration:
+    connection: 'test'
+    path: '%kernel.project_dir%/src/Migration'

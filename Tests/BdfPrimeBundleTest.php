@@ -4,6 +4,7 @@ namespace Bdf\PrimeBundle\Tests\DependencyInjection;
 
 require_once __DIR__.'/TestKernel.php';
 
+use Bdf\Prime\Cache\DoctrineCacheAdapter;
 use Bdf\Prime\Connection\SimpleConnection;
 use Bdf\Prime\Migration\MigrationManager;
 use Bdf\Prime\ServiceLocator;
@@ -11,6 +12,8 @@ use Bdf\Prime\Sharding\ShardingConnection;
 use Bdf\Prime\Sharding\ShardingQuery;
 use Bdf\PrimeBundle\Collector\PrimeDataCollector;
 use Bdf\PrimeBundle\PrimeBundle;
+use Doctrine\Common\Cache\ArrayCache;
+use Doctrine\Common\Cache\FilesystemCache;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
@@ -111,5 +114,67 @@ class BdfPrimeBundleTest extends TestCase
         $prime = $kernel->getContainer()->get(ServiceLocator::class);
         $this->assertInstanceOf(ShardingConnection::class, $prime->connection('test'));
         $this->assertInstanceOf(ShardingQuery::class, $prime->connection('test')->builder());
+    }
+
+    /**
+     *
+     */
+    public function test_doctrine_array_cache()
+    {
+        $kernel = new class('test', true) extends Kernel {
+            use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+
+            public function registerBundles()
+            {
+                return [
+                    new FrameworkBundle(),
+                    new PrimeBundle(),
+                ];
+            }
+
+            protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)
+            {
+                $loader->import(__DIR__.'/doctrine_array_cache.yaml');
+            }
+
+            protected function configureRoutes(RouteCollectionBuilder $routes) { }
+        };
+
+        $kernel->boot();
+
+        /** @var ServiceLocator $prime */
+        $prime = $kernel->getContainer()->get(ServiceLocator::class);
+        $this->assertEquals(new DoctrineCacheAdapter(new ArrayCache()), $prime->mappers()->getResultCache());
+    }
+
+    /**
+     *
+     */
+    public function test_doctrine_filesystem_cache()
+    {
+        $kernel = new class('test', true) extends Kernel {
+            use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+
+            public function registerBundles()
+            {
+                return [
+                    new FrameworkBundle(),
+                    new PrimeBundle(),
+                ];
+            }
+
+            protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)
+            {
+                $loader->import(__DIR__.'/doctrine_filesystem_cache.yaml');
+            }
+
+            protected function configureRoutes(RouteCollectionBuilder $routes) { }
+        };
+
+        $kernel->boot();
+
+        /** @var ServiceLocator $prime */
+        $prime = $kernel->getContainer()->get(ServiceLocator::class);
+        $this->assertEquals(new DoctrineCacheAdapter(new FilesystemCache('./tmp/cache')), $prime->mappers()->getResultCache());
     }
 }

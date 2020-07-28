@@ -1,0 +1,14 @@
+prime:
+  activerecord: true
+  default_connection: 'test'
+  cache:
+    query:
+      provider:
+        service: Doctrine\Common\Cache\ArrayCache
+  connections:
+    test:
+      url: 'sqlite::memory:'
+
+  migration:
+    connection: 'test'
+    path: '%kernel.project_dir%/src/Migration'
