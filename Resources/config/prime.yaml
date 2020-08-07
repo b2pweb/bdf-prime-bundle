@@ -138,8 +138,6 @@ services:
   Bdf\Prime\Cache\CacheInterface: '@Bdf\Prime\Cache\ArrayCache'
   Bdf\Prime\Cache\ArrayCache:
     class: Bdf\Prime\Cache\ArrayCache
-  Doctrine\Common\Cache\ArrayCache:
-    class: Doctrine\Common\Cache\ArrayCache
 
 
   # Migration

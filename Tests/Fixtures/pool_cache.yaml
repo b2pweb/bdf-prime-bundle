@@ -3,8 +3,7 @@ prime:
   default_connection: 'test'
   cache:
     query:
-      provider:
-        filesystem: './tmp/cache'
+      pool: 'custom.cache'
   connections:
     test:
       url: 'sqlite::memory:'

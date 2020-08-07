@@ -3,8 +3,7 @@ prime:
   default_connection: 'test'
   cache:
     query:
-      provider:
-        service: Doctrine\Common\Cache\ArrayCache
+      service: Bdf\Prime\Cache\ArrayCache
   connections:
     test:
       url: 'sqlite::memory:'

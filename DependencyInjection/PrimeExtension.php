@@ -14,6 +14,7 @@ use Bdf\Prime\Connection\Factory\ShardingConnectionFactory;
 use Bdf\Prime\Mapper\MapperFactory;
 use Bdf\Prime\Types\TypesRegistryInterface;
 use Doctrine\Common\Cache\FilesystemCache;
+use Symfony\Component\Cache\DoctrineProvider;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Compiler\PriorityTaggedServiceTrait;
@@ -206,7 +207,6 @@ class PrimeExtension extends Extension
             if (!$container->has($namespace)) {
                 $definition = $container->register($namespace, Psr16Cache::class);
                 $definition->addArgument(new Reference($config['pool']));
-                $definition->setPrivate(true);
             }
 
             return new Reference($namespace);
@@ -229,44 +229,19 @@ class PrimeExtension extends Extension
             return new Reference($config['service']);
         }
 
-        if (isset($config['provider'])) {
+        if (isset($config['pool'])) {
             if (!$container->has($namespace)) {
+                $definition = $container->register($namespace.'.doctrine-provider', DoctrineProvider::class);
+                $definition->addArgument(new Reference($config['pool']));
+
                 $definition = $container->register($namespace, DoctrineCacheAdapter::class);
-                $definition->addArgument($this->createDoctrineCacheProvider($namespace, $config['provider'], $container));
-                $definition->setPrivate(true);
+                $definition->addArgument(new Reference($namespace.'.doctrine-provider'));
             }
 
             return new Reference($namespace);
         }
 
         return null;
-    }
-
-    /**
-     * Create the doctrine cache provider service
-     *
-     * @param string $namespace
-     * @param array $config
-     * @param ContainerBuilder $container
-     *
-     * @return Reference
-     */
-    private function createDoctrineCacheProvider(string $namespace, array $config, ContainerBuilder $container): Reference
-    {
-        if (isset($config['service'])) {
-            return new Reference($config['service']);
-        }
-
-        if (isset($config['filesystem'])) {
-            $container
-                ->register($namespace.'.doctrine-provider', FilesystemCache::class)
-                ->addArgument($config['filesystem'])
-            ;
-
-            return new Reference($namespace.'.doctrine-provider');
-        }
-
-        throw new InvalidArgumentException('Invalid result cache configuration');
     }
 
     /**

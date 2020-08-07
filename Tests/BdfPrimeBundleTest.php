@@ -4,6 +4,7 @@ namespace Bdf\PrimeBundle\Tests\DependencyInjection;
 
 require_once __DIR__.'/TestKernel.php';
 
+use Bdf\Prime\Cache\ArrayCache;
 use Bdf\Prime\Cache\DoctrineCacheAdapter;
 use Bdf\Prime\Connection\SimpleConnection;
 use Bdf\Prime\Migration\MigrationManager;
@@ -12,10 +13,10 @@ use Bdf\Prime\Sharding\ShardingConnection;
 use Bdf\Prime\Sharding\ShardingQuery;
 use Bdf\PrimeBundle\Collector\PrimeDataCollector;
 use Bdf\PrimeBundle\PrimeBundle;
-use Doctrine\Common\Cache\ArrayCache;
-use Doctrine\Common\Cache\FilesystemCache;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Component\Cache\DoctrineProvider;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpFoundation\Request;
@@ -102,7 +103,7 @@ class BdfPrimeBundleTest extends TestCase
 
             protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)
             {
-                $loader->import(__DIR__.'/sharding.yaml');
+                $loader->import(__DIR__.'/Fixtures/sharding.yaml');
             }
 
             protected function configureRoutes(RouteCollectionBuilder $routes) { }
@@ -119,7 +120,7 @@ class BdfPrimeBundleTest extends TestCase
     /**
      *
      */
-    public function test_doctrine_array_cache()
+    public function test_array_cache()
     {
         $kernel = new class('test', true) extends Kernel {
             use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
@@ -134,7 +135,7 @@ class BdfPrimeBundleTest extends TestCase
 
             protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)
             {
-                $loader->import(__DIR__.'/doctrine_array_cache.yaml');
+                $loader->import(__DIR__.'/Fixtures/array_cache.yaml');
             }
 
             protected function configureRoutes(RouteCollectionBuilder $routes) { }
@@ -144,13 +145,13 @@ class BdfPrimeBundleTest extends TestCase
 
         /** @var ServiceLocator $prime */
         $prime = $kernel->getContainer()->get(ServiceLocator::class);
-        $this->assertEquals(new DoctrineCacheAdapter(new ArrayCache()), $prime->mappers()->getResultCache());
+        $this->assertEquals(new ArrayCache(), $prime->mappers()->getResultCache());
     }
 
     /**
      *
      */
-    public function test_doctrine_filesystem_cache()
+    public function test_pool_cache()
     {
         $kernel = new class('test', true) extends Kernel {
             use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
@@ -165,7 +166,9 @@ class BdfPrimeBundleTest extends TestCase
 
             protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)
             {
-                $loader->import(__DIR__.'/doctrine_filesystem_cache.yaml');
+                $c->register('custom.cache', FilesystemAdapter::class);
+
+                $loader->import(__DIR__.'/Fixtures/pool_cache.yaml');
             }
 
             protected function configureRoutes(RouteCollectionBuilder $routes) { }
@@ -175,6 +178,6 @@ class BdfPrimeBundleTest extends TestCase
 
         /** @var ServiceLocator $prime */
         $prime = $kernel->getContainer()->get(ServiceLocator::class);
-        $this->assertEquals(new DoctrineCacheAdapter(new FilesystemCache('./tmp/cache')), $prime->mappers()->getResultCache());
+        $this->assertEquals(new DoctrineCacheAdapter(new DoctrineProvider(new FilesystemAdapter())), $prime->mappers()->getResultCache());
     }
 }
