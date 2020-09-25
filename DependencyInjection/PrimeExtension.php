@@ -103,11 +103,8 @@ class PrimeExtension extends Extension
             return false;
         }
 
-        try {
-            return Dsn::parse($options['url'])->query($option) !== null;
-        } catch (\Throwable $exception) {
-            return false;
-        }
+        // The option could be in the url. Adding the factory by default.
+        return true;
     }
 
     /**
