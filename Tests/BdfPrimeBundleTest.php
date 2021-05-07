@@ -1,6 +1,6 @@
 <?php
 
-namespace Bdf\PrimeBundle\Tests\DependencyInjection;
+namespace Bdf\PrimeBundle\Tests;
 
 require_once __DIR__.'/TestKernel.php';
 
@@ -12,6 +12,7 @@ use Bdf\Prime\ServiceLocator;
 use Bdf\Prime\Sharding\ShardingConnection;
 use Bdf\Prime\Sharding\ShardingQuery;
 use Bdf\PrimeBundle\Collector\PrimeDataCollector;
+use Bdf\PrimeBundle\DependencyInjection\Compiler\PrimeConnectionFactoryPass;
 use Bdf\PrimeBundle\PrimeBundle;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
@@ -30,11 +31,20 @@ class BdfPrimeBundleTest extends TestCase
 {
     public function test_default_config()
     {
-        $builder = $this->createMock(ContainerBuilder::class);
-
+        $builder = new ContainerBuilder();
         $bundle = new PrimeBundle();
+        $bundle->build($builder);
 
-        $this->assertNull($bundle->build($builder));
+        $compilerPasses = $builder->getCompiler()->getPassConfig()->getPasses();
+        $found = 0;
+
+        foreach ($compilerPasses as $pass) {
+            if ($pass instanceof PrimeConnectionFactoryPass) {
+                $found++;
+            }
+        }
+
+        $this->assertSame(1, $found);
     }
 
     /**

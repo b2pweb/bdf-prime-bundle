@@ -2,24 +2,18 @@
 
 namespace Bdf\PrimeBundle\DependencyInjection;
 
-use Bdf\Dsn\Dsn;
 use Bdf\Prime\Cache\DoctrineCacheAdapter;
 use Bdf\Prime\Configuration as PrimeConfiguration;
 use Bdf\Prime\Connection\ConnectionRegistry;
-use Bdf\Prime\Connection\Factory\ChainFactory;
 use Bdf\Prime\Connection\Factory\ConnectionFactory;
-use Bdf\Prime\Connection\Factory\ConnectionFactoryInterface;
 use Bdf\Prime\Connection\Factory\MasterSlaveConnectionFactory;
 use Bdf\Prime\Connection\Factory\ShardingConnectionFactory;
 use Bdf\Prime\Mapper\MapperFactory;
 use Bdf\Prime\Types\TypesRegistryInterface;
-use Doctrine\Common\Cache\FilesystemCache;
 use Symfony\Component\Cache\DoctrineProvider;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\FileLocator;
-use Symfony\Component\DependencyInjection\Compiler\PriorityTaggedServiceTrait;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -30,8 +24,6 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class PrimeExtension extends Extension
 {
-    use PriorityTaggedServiceTrait;
-
     /**
      * {@inheritDoc}
      */
@@ -78,11 +70,6 @@ class PrimeExtension extends Extension
                     ->addArgument(new Reference(ConnectionFactory::class));
             }
         }
-
-        $factories = $this->findAndSortTaggedServices('bdf_prime.connection_factory', $container);
-
-        $connectionFactory = $container->getDefinition(ChainFactory::class);
-        $connectionFactory->replaceArgument(0, $factories);
 
         $registry = $container->getDefinition(ConnectionRegistry::class);
         $registry->replaceArgument(0, $config['connections']);
