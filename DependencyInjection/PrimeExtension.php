@@ -140,7 +140,6 @@ class PrimeExtension extends Extension
     public function configureConfiguration(array $config, ContainerBuilder $container)
     {
         $configuration = $container->register(PrimeConfiguration::class, '%prime.configuration.class%');
-        $configuration->addMethodCall('setDbConfig', [$config['connections']]);
         $configuration->addMethodCall('setTypes', [new Reference(TypesRegistryInterface::class)]);
 
         $typeRegistry = $container->findDefinition(TypesRegistryInterface::class);
