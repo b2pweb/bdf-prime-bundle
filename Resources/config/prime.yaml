@@ -60,7 +60,7 @@ services:
     arguments:
       - []
       - '@Bdf\Connection\Factory\ConnectionFactoryInterface'
-      - '@Bdf\Prime\Configuration'
+      - '@Bdf\Prime\Connection\Configuration\ConfigurationResolverInterface'
 
   Bdf\Connection\Factory\ConnectionFactoryInterface:
     alias: 'Bdf\Prime\Connection\Factory\ChainFactory'
@@ -75,8 +75,17 @@ services:
     tags:
       - {name: 'bdf_prime.connection_factory', priority: -1000 }
 
+  Bdf\Prime\Connection\Configuration\ConfigurationResolverInterface:
+    alias: 'Bdf\Prime\Connection\Configuration\ConfigurationResolver'
+
+  Bdf\Prime\Connection\Configuration\ConfigurationResolver:
+    class: 'Bdf\Prime\Connection\Configuration\ConfigurationResolver'
+    arguments:
+      - []
+      - null
+
   Bdf\Prime\Configuration:
-    class: 'Bdf\Prime\Configuration'
+    class: '%prime.configuration.class%'
     abstract: true
 
 
@@ -113,6 +122,7 @@ services:
   # Types
   Bdf\Prime\Types\TypesRegistryInterface:
     class: Bdf\Prime\Types\TypesRegistry
+    abstract: true
     arguments:
       - '%prime.types%'
 

@@ -11,6 +11,7 @@ use Bdf\Prime\Migration\MigrationManager;
 use Bdf\Prime\ServiceLocator;
 use Bdf\Prime\Sharding\ShardingConnection;
 use Bdf\Prime\Sharding\ShardingQuery;
+use Bdf\Prime\Types\ArrayType;
 use Bdf\PrimeBundle\Collector\PrimeDataCollector;
 use Bdf\PrimeBundle\DependencyInjection\Compiler\PrimeConnectionFactoryPass;
 use Bdf\PrimeBundle\PrimeBundle;
@@ -125,6 +126,10 @@ class BdfPrimeBundleTest extends TestCase
         $prime = $kernel->getContainer()->get(ServiceLocator::class);
         $this->assertInstanceOf(ShardingConnection::class, $prime->connection('test'));
         $this->assertInstanceOf(ShardingQuery::class, $prime->connection('test')->builder());
+
+        /** @var SimpleConnection $connection */
+        $connection = $prime->connection('test.shard1');
+        $this->assertSame($prime->connection('test')->getConfiguration(), $connection->getConfiguration());
     }
 
     /**
@@ -190,4 +195,89 @@ class BdfPrimeBundleTest extends TestCase
         $prime = $kernel->getContainer()->get(ServiceLocator::class);
         $this->assertEquals(new DoctrineCacheAdapter(new DoctrineProvider(new FilesystemAdapter())), $prime->mappers()->getResultCache());
     }
+
+    /**
+     *
+     */
+    public function test_global_config()
+    {
+        $kernel = new class('test', true) extends Kernel {
+            use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+
+            public function registerBundles()
+            {
+                return [
+                    new FrameworkBundle(),
+                    new PrimeBundle(),
+                ];
+            }
+
+            protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)
+            {
+                $loader->import(__DIR__.'/Fixtures/config.yaml');
+            }
+
+            protected function configureRoutes(RouteCollectionBuilder $routes) { }
+        };
+
+        $kernel->boot();
+
+        /** @var ServiceLocator $prime */
+        $prime = $kernel->getContainer()->get(ServiceLocator::class);
+        /** @var SimpleConnection $connection */
+        $connection = $prime->connection('test2');
+
+        $this->assertNotNull($connection->getConfiguration()->getSQLLogger());
+        $this->assertTrue($connection->getConfiguration()->getAutoCommit());
+        $this->assertInstanceOf(FooType::class, $connection->getConfiguration()->getTypes()->get('foo'));
+        $this->assertInstanceOf(BarType::class, $connection->getConfiguration()->getTypes()->get('bar'));
+        $this->assertInstanceOf(ArrayType::class, $connection->getConfiguration()->getTypes()->get('array'));
+    }
+
+    /**
+     *
+     */
+    public function test_connection_config()
+    {
+        $kernel = new class('test', true) extends Kernel {
+            use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+
+            public function registerBundles()
+            {
+                return [
+                    new FrameworkBundle(),
+                    new PrimeBundle(),
+                ];
+            }
+
+            protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)
+            {
+                $loader->import(__DIR__.'/Fixtures/config.yaml');
+            }
+
+            protected function configureRoutes(RouteCollectionBuilder $routes) { }
+        };
+
+        $kernel->boot();
+
+        /** @var ServiceLocator $prime */
+        $prime = $kernel->getContainer()->get(ServiceLocator::class);
+        /** @var SimpleConnection $connection */
+        $connection = $prime->connection('test');
+
+        $this->assertNull($connection->getConfiguration()->getSQLLogger());
+        $this->assertFalse($connection->getConfiguration()->getAutoCommit());
+        $this->assertInstanceOf(BarType::class, $connection->getConfiguration()->getTypes()->get('foo'));
+        $this->assertInstanceOf(BarType::class, $connection->getConfiguration()->getTypes()->get('bar'));
+        $this->assertInstanceOf(ArrayType::class, $connection->getConfiguration()->getTypes()->get('array'));
+    }
+}
+
+class FooType
+{
+
+}
+class BarType
+{
+
 }

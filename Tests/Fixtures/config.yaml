@@ -1,0 +1,22 @@
+prime:
+  activerecord: true
+  logging: true
+  profiling: true
+  auto_commit: true
+  types:
+    - { name: foo, class: \Bdf\PrimeBundle\Tests\FooType }
+    - { name: bar, class: \Bdf\PrimeBundle\Tests\BarType }
+  default_connection: 'test'
+  connections:
+    test:
+      url: 'sqlite::memory:'
+      logging: false
+      profiling: false
+      auto_commit: false
+      types:
+        - { name: foo, class: \Bdf\PrimeBundle\Tests\BarType }
+    test2:
+      url: 'sqlite::memory:'
+  migration:
+    connection: 'test'
+    path: '%kernel.project_dir%/src/Migration'

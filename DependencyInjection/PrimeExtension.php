@@ -4,6 +4,7 @@ namespace Bdf\PrimeBundle\DependencyInjection;
 
 use Bdf\Prime\Cache\DoctrineCacheAdapter;
 use Bdf\Prime\Configuration as PrimeConfiguration;
+use Bdf\Prime\Connection\Configuration\ConfigurationResolver;
 use Bdf\Prime\Connection\ConnectionRegistry;
 use Bdf\Prime\Connection\Factory\ConnectionFactory;
 use Bdf\Prime\Connection\Factory\MasterSlaveConnectionFactory;
@@ -13,6 +14,7 @@ use Bdf\Prime\Types\TypesRegistryInterface;
 use Symfony\Component\Cache\DoctrineProvider;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -38,7 +40,6 @@ class PrimeExtension extends Extension
 
         $this->configureConnection($config, $container);
         $this->configureMapperCache($config, $container);
-        $this->configureConfiguration($config, $container);
         $this->configureSerializer($config, $container);
 
         $container->setParameter('prime.default_connection', $config['default_connection']);
@@ -55,8 +56,13 @@ class PrimeExtension extends Extension
      */
     public function configureConnection(array $config, ContainerBuilder $container)
     {
+        $configurations = [];
+
         foreach ($config['connections'] as $name => &$options) {
             $options = $this->cleanConnectionOptions($options);
+
+            // Overwrite global config by the connection config parameters and create the configuration reference.
+            $configurations[$name] = $this->createConfiguration($name, $this->mergeConfiguration($config, $options), $container);
 
             if (!$container->hasDefinition(MasterSlaveConnectionFactory::class) && $this->hasConnectionOption('read', $options)) {
                 $container->register(MasterSlaveConnectionFactory::class, MasterSlaveConnectionFactory::class)
@@ -73,6 +79,9 @@ class PrimeExtension extends Extension
 
         $registry = $container->getDefinition(ConnectionRegistry::class);
         $registry->replaceArgument(0, $config['connections']);
+
+        $resolver = $container->getDefinition(ConfigurationResolver::class);
+        $resolver->replaceArgument(0, $configurations);
     }
 
     /**
@@ -134,15 +143,36 @@ class PrimeExtension extends Extension
     }
 
     /**
+     * @param array $globalConfig
+     * @param array $config
+     *
+     * @return array
+     */
+    public function mergeConfiguration(array $globalConfig, array $config): array
+    {
+        return [
+            'types' => array_merge($globalConfig['types'], $config['types']),
+            'auto_commit' => $config['auto_commit'] ?? $globalConfig['auto_commit'],
+            'logging' => $config['logging'] ?? $globalConfig['logging'],
+            'profiling' => $config['profiling'] ?? $globalConfig['profiling'],
+        ];
+    }
+
+    /**
+     * @param string $name
      * @param array $config
      * @param ContainerBuilder $container
+     *
+     * @return Reference
      */
-    public function configureConfiguration(array $config, ContainerBuilder $container)
+    public function createConfiguration(string $name, array $config, ContainerBuilder $container): Reference
     {
-        $configuration = $container->register(PrimeConfiguration::class, '%prime.configuration.class%');
-        $configuration->addMethodCall('setTypes', [new Reference(TypesRegistryInterface::class)]);
+        $namespace = "prime.{$name}_connection";
 
-        $typeRegistry = $container->findDefinition(TypesRegistryInterface::class);
+        $configuration = $container->setDefinition("$namespace.configuration", new ChildDefinition(PrimeConfiguration::class));
+        $configuration->addMethodCall('setTypes', [new Reference("$namespace.types")]);
+
+        $typeRegistry = $container->setDefinition("$namespace.types", new ChildDefinition(TypesRegistryInterface::class));
         foreach ($config['types'] as $type => $info) {
             $typeRegistry->addMethodCall('register', [$info['class'], is_int($type) ? null : $type]);
         }
@@ -172,6 +202,8 @@ class PrimeExtension extends Extension
         if ($logger) {
             $configuration->addMethodCall('setSQLLogger', [$logger]);
         }
+
+        return new Reference("$namespace.configuration");
     }
 
     /**

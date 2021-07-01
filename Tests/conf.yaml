@@ -1,4 +1,5 @@
 framework:
+  secret: '%env(APP_SECRET)%'
   profiler:
     enabled: true
 web_profiler:

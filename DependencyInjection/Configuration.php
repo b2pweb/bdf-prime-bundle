@@ -31,23 +31,45 @@ class Configuration implements ConfigurationInterface
     public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder('prime');
-        $treeBuilder->getRootNode()
+        $node = $treeBuilder->getRootNode();
+        $node
             ->children()
                 ->booleanNode('activerecord')->defaultFalse()->end()
                 ->scalarNode('hydrators')->defaultValue('%kernel.cache_dir%/prime/hydrators/loader.php')->end()
                 ->scalarNode('serializer')->info('The bdf serializer service id.')->end()
                 ->scalarNode('default_connection')->defaultNull()->end()
                 ->append($this->getConnectionsNode())
-                ->booleanNode('logging')->defaultValue($this->debug)->end()
-                ->booleanNode('profiling')->defaultValue($this->debug)->end()
-                ->booleanNode('auto_commit')->defaultNull()->end()
-                ->append($this->getTypesNode())
                 ->append($this->getMigrationNode())
                 ->append($this->getCacheNode())
             ->end()
         ;
 
+        $this->configureConfigurationNode($node, true);
+
         return $treeBuilder;
+    }
+
+    /**
+     * Adds the configuration node of the connection
+     * Could be the global config or a connection config
+     *
+     * @param ArrayNodeDefinition $node
+     */
+    private function configureConfigurationNode(ArrayNodeDefinition $node, bool $addDefault): void
+    {
+        $parametersNode = $node->children();
+
+        $loggingNode = $parametersNode->booleanNode('logging');
+        $profilingNode = $parametersNode->booleanNode('profiling');
+        $autoCommitNode = $parametersNode->booleanNode('auto_commit');
+
+        if ($addDefault === true) {
+            $loggingNode->defaultValue($this->debug);
+            $profilingNode->defaultValue($this->debug);
+            $autoCommitNode->defaultNull();
+        }
+
+        $parametersNode->append($this->getTypesNode());
     }
 
     /**
@@ -71,13 +93,11 @@ class Configuration implements ConfigurationInterface
         ;
 
         $this->configureDbalDriverNode($connectionNode);
+        $this->configureConfigurationNode($connectionNode, false);
 
         $connectionNode
             ->children()
                 ->scalarNode('driver')->end()
-//                ->booleanNode('auto_commit')->end()
-//                ->booleanNode('logging')->defaultValue($this->debug)->end()
-//                ->booleanNode('profiling')->defaultValue($this->debug)->end()
                 ->scalarNode('platform_service')->end()
                 ->scalarNode('server_version')->end()
                 ->scalarNode('driver_class')->end()
