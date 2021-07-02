@@ -4,7 +4,6 @@ namespace Bdf\PrimeBundle\DependencyInjection;
 
 use Bdf\Prime\Cache\DoctrineCacheAdapter;
 use Bdf\Prime\Configuration as PrimeConfiguration;
-use Bdf\Prime\Connection\Configuration\ConfigurationResolver;
 use Bdf\Prime\Connection\ConnectionRegistry;
 use Bdf\Prime\Connection\Factory\ConnectionFactory;
 use Bdf\Prime\Connection\Factory\MasterSlaveConnectionFactory;
@@ -56,13 +55,11 @@ class PrimeExtension extends Extension
      */
     public function configureConnection(array $config, ContainerBuilder $container)
     {
-        $configurations = [];
-
         foreach ($config['connections'] as $name => &$options) {
             $options = $this->cleanConnectionOptions($options);
 
             // Overwrite global config by the connection config parameters and create the configuration reference.
-            $configurations[$name] = $this->createConfiguration($name, $this->mergeConfiguration($config, $options), $container);
+            $this->createConfiguration($name, $this->mergeConfiguration($config, $options), $container);
 
             if (!$container->hasDefinition(MasterSlaveConnectionFactory::class) && $this->hasConnectionOption('read', $options)) {
                 $container->register(MasterSlaveConnectionFactory::class, MasterSlaveConnectionFactory::class)
@@ -79,9 +76,6 @@ class PrimeExtension extends Extension
 
         $registry = $container->getDefinition(ConnectionRegistry::class);
         $registry->replaceArgument(0, $config['connections']);
-
-        $resolver = $container->getDefinition(ConfigurationResolver::class);
-        $resolver->replaceArgument(0, $configurations);
     }
 
     /**
@@ -159,17 +153,18 @@ class PrimeExtension extends Extension
     }
 
     /**
+     * Create and declare the configuration definition of the connection
+     *
      * @param string $name
      * @param array $config
      * @param ContainerBuilder $container
-     *
-     * @return Reference
      */
-    public function createConfiguration(string $name, array $config, ContainerBuilder $container): Reference
+    public function createConfiguration(string $name, array $config, ContainerBuilder $container): void
     {
         $namespace = "prime.{$name}_connection";
 
         $configuration = $container->setDefinition("$namespace.configuration", new ChildDefinition(PrimeConfiguration::class));
+        $configuration->setPublic(true);
         $configuration->addMethodCall('setTypes', [new Reference("$namespace.types")]);
 
         $typeRegistry = $container->setDefinition("$namespace.types", new ChildDefinition(TypesRegistryInterface::class));
@@ -202,8 +197,6 @@ class PrimeExtension extends Extension
         if ($logger) {
             $configuration->addMethodCall('setSQLLogger', [$logger]);
         }
-
-        return new Reference("$namespace.configuration");
     }
 
     /**

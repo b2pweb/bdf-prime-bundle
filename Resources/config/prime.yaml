@@ -76,13 +76,11 @@ services:
       - {name: 'bdf_prime.connection_factory', priority: -1000 }
 
   Bdf\Prime\Connection\Configuration\ConfigurationResolverInterface:
-    alias: 'Bdf\Prime\Connection\Configuration\ConfigurationResolver'
+    alias: 'Bdf\PrimeBundle\Connection\ConfigurationResolver'
 
-  Bdf\Prime\Connection\Configuration\ConfigurationResolver:
-    class: 'Bdf\Prime\Connection\Configuration\ConfigurationResolver'
-    arguments:
-      - []
-      - null
+  Bdf\PrimeBundle\Connection\ConfigurationResolver:
+    class: 'Bdf\PrimeBundle\Connection\ConfigurationResolver'
+    arguments: ['@service_container']
 
   Bdf\Prime\Configuration:
     class: '%prime.configuration.class%'
