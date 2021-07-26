@@ -186,7 +186,7 @@ class PrimeExtension extends Extension
 
             if ($logger !== null) {
                 $chainLogger = $container->findDefinition('prime.logger.chain');
-                $chainLogger->addMethodCall('addLogger', [$profilingLogger]);
+                $chainLogger->replaceArgument(0, [$logger, $profilingLogger]);
 
                 $logger = new Reference('prime.logger.chain');
             } else {

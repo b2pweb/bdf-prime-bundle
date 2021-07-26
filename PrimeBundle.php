@@ -4,6 +4,7 @@ namespace Bdf\PrimeBundle;
 
 use Bdf\Prime\Locatorizable;
 use Bdf\Prime\ServiceLocator;
+use Bdf\PrimeBundle\DependencyInjection\Compiler\IgnorePrimeAnnotationsPass;
 use Bdf\PrimeBundle\DependencyInjection\Compiler\PrimeConnectionFactoryPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
@@ -33,6 +34,7 @@ class PrimeBundle extends Bundle
     public function build(ContainerBuilder $container)
     {
         $container->addCompilerPass(new PrimeConnectionFactoryPass());
+        $container->addCompilerPass(new IgnorePrimeAnnotationsPass());
     }
 
     /**
