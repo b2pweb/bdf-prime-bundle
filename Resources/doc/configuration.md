@@ -6,7 +6,7 @@ prime:
     # Enable active record mode to easy access to repositories
     activerecord:                 false
   
-    # When true, queries are logged to a "doctrine" monolog channel
+    # When true, queries are logged to a "prime" monolog channel
     logging:                      "%kernel.debug%"
     profiling:                    "%kernel.debug%"
 
@@ -40,6 +40,8 @@ prime:
     connections:
         # A collection of different named connections (e.g. default, conn2, etc)
         default:
+            # A URL with connection information; any parameter value parsed from this string will override explicitly set parameters
+            url:                  ~ 
             dbname:               ~
             host:                 ~
             port:                 ~
@@ -47,6 +49,20 @@ prime:
             password:             ~
             charset:              "UTF8"
 
+            # When true, queries are logged to a "prime" monolog channel. 
+            # Those overwrite the global configuration above.
+            logging:              ~
+            profiling:            ~
+            auto_commit:          ~
+
+            # Add more types for this connection. Extends the global configuration.
+            types:
+              # example
+              some_custom_type: Acme\HelloBundle\MyCustomType
+        
+            # 
+            application_name:     ~
+            
             # SQLite specific
             path:                 ~
 
@@ -106,6 +122,12 @@ prime:
             # pdo_sqlsrv driver specific. Configuring MultipleActiveResultSets for the pdo_sqlsrv driver
             MultipleActiveResultSets:  ~
 
+            # Used to connect to an Oracle RAC server to select the name of a particular instance.
+            instancename:  ~
+
+            # Complete Easy Connect connection descriptor, see https://docs.oracle.com/database/121/NETAG/naming.htm.
+            connectstring:  ~
+
             # Enable savepoints for nested transactions
 #            use_savepoints: true
 
@@ -132,6 +154,7 @@ prime:
 
             # The read connection of master / slave connection
             read:
+                url:                  ~ 
                 # A collection of named slave connections (e.g. slave1, slave2)
                 dbname:               ~
                 host:                 ~
@@ -199,6 +222,7 @@ prime:
             distribution_key:         ~
             shards:
                 shard1:
+                    url:                  ~
                     dbname:               ~
                     host:                 ~
                     port:                 ~

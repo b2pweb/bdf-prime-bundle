@@ -91,3 +91,5 @@ prime:
       pool: null
       service: null
 ```
+
+See [the available values](doc/configuration.md) of the configuration
