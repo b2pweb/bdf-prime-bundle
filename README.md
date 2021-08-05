@@ -92,4 +92,4 @@ prime:
       service: null
 ```
 
-See [the available values](doc/configuration.md) of the configuration
+See [the available values](Resources/doc/configuration.md) of the configuration
