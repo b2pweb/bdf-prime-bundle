@@ -1,0 +1,9 @@
+v1.2.0
+------
+
+* Feat: Migration to prime 1.2.
+* Feat: Adding support of configuration by connection.
+* Fix: Remove bdf serializer annotations from doctrine annotations reader.
+* Imp: Improve loading of configuration of connection.
+* Imp: Compatibility with symfony 5.3.
+* Doc: Update the documentation of the configuration
