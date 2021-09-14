@@ -289,3 +289,10 @@ services:
       - '@prime.migration'
     tags:
       - { name: 'console.command' }
+
+  prime.run.sql:
+    class: 'Bdf\Prime\Console\RunSqlCommand'
+    arguments:
+      - '@Bdf\Prime\ConnectionManager'
+    tags:
+      - { name: 'console.command' }
