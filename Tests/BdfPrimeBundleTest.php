@@ -15,6 +15,7 @@ use Bdf\Prime\Types\ArrayType;
 use Bdf\PrimeBundle\Collector\PrimeDataCollector;
 use Bdf\PrimeBundle\DependencyInjection\Compiler\PrimeConnectionFactoryPass;
 use Bdf\PrimeBundle\PrimeBundle;
+use Doctrine\DBAL\Driver;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
@@ -75,8 +76,10 @@ class BdfPrimeBundleTest extends TestCase
         $this->assertInstanceOf(PrimeDataCollector::class, $collector);
         $kernel->handle(Request::create('http://127.0.0.1/'));
 
-        $this->assertEquals(3, $collector->getQueryCount());
-        $this->assertEquals('SELECT * FROM test_ WHERE id = ? LIMIT 1', $collector->getQueries()[''][3]['sql']);
+        $isDoctrine2 = method_exists(Driver::class, 'getDatabase');
+
+        $this->assertEquals($isDoctrine2 ? 3 : 4, $collector->getQueryCount()); // Doctrine 3 always perform a select query on Connection::getDatabase()
+        $this->assertEquals('SELECT * FROM test_ WHERE id = ? LIMIT 1', $collector->getQueries()[''][$isDoctrine2 ? 3 : 4]['sql']);
     }
 
     /**

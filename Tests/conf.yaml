@@ -14,3 +14,6 @@ prime:
     connection: 'test'
     path: '%kernel.project_dir%/src/Migration'
   profiling: true
+services:
+  logger:
+    class: 'Psr\Log\NullLogger'
