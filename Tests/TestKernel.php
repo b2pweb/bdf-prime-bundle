@@ -16,7 +16,7 @@ class TestKernel extends \Symfony\Component\HttpKernel\Kernel
 {
     use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 
-    public function registerBundles()
+    public function registerBundles(): iterable
     {
         return [
             new \Symfony\Bundle\FrameworkBundle\FrameworkBundle(),
@@ -27,12 +27,18 @@ class TestKernel extends \Symfony\Component\HttpKernel\Kernel
         ];
     }
 
-    protected function configureRoutes(RouteCollectionBuilder $routes)
+    protected function configureRoutes($routes)
     {
-        $routes->add('/', 'kernel::indexAction');
         //$routes->add('index', '/')->controller([$this, 'indexAction']);
-        $routes->import('@WebProfilerBundle/Resources/config/routing/wdt.xml', '/_wdt');
-        $routes->import('@WebProfilerBundle/Resources/config/routing/profiler.xml', '/_profiler');
+        if ($routes instanceof RouteCollectionBuilder) {
+            $routes->add('/', 'kernel::indexAction');
+            $routes->import('@WebProfilerBundle/Resources/config/routing/wdt.xml', '/_wdt');
+            $routes->import('@WebProfilerBundle/Resources/config/routing/profiler.xml', '/_profiler');
+        } else {
+            $routes->add('index', '/')->controller([$this, 'indexAction']);
+            $routes->import('@WebProfilerBundle/Resources/config/routing/wdt.xml');
+            $routes->import('@WebProfilerBundle/Resources/config/routing/profiler.xml');
+        }
     }
 
     protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)

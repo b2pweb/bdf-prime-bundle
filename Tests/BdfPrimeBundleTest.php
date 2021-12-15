@@ -15,11 +15,11 @@ use Bdf\Prime\Types\ArrayType;
 use Bdf\PrimeBundle\Collector\PrimeDataCollector;
 use Bdf\PrimeBundle\DependencyInjection\Compiler\PrimeConnectionFactoryPass;
 use Bdf\PrimeBundle\PrimeBundle;
+use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Doctrine\DBAL\Driver;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
-use Symfony\Component\Cache\DoctrineProvider;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpFoundation\Request;
@@ -107,7 +107,7 @@ class BdfPrimeBundleTest extends TestCase
         $kernel = new class('test', true) extends Kernel {
             use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 
-            public function registerBundles()
+            public function registerBundles(): iterable
             {
                 return [
                     new FrameworkBundle(),
@@ -143,7 +143,7 @@ class BdfPrimeBundleTest extends TestCase
         $kernel = new class('test', true) extends Kernel {
             use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 
-            public function registerBundles()
+            public function registerBundles(): iterable
             {
                 return [
                     new FrameworkBundle(),
@@ -156,7 +156,7 @@ class BdfPrimeBundleTest extends TestCase
                 $loader->import(__DIR__.'/Fixtures/array_cache.yaml');
             }
 
-            protected function configureRoutes(RouteCollectionBuilder $routes) { }
+            protected function configureRoutes($routes) { }
         };
 
         $kernel->boot();
@@ -174,7 +174,7 @@ class BdfPrimeBundleTest extends TestCase
         $kernel = new class('test', true) extends Kernel {
             use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 
-            public function registerBundles()
+            public function registerBundles(): iterable
             {
                 return [
                     new FrameworkBundle(),
@@ -189,14 +189,14 @@ class BdfPrimeBundleTest extends TestCase
                 $loader->import(__DIR__.'/Fixtures/pool_cache.yaml');
             }
 
-            protected function configureRoutes(RouteCollectionBuilder $routes) { }
+            protected function configureRoutes($routes) { }
         };
 
         $kernel->boot();
 
         /** @var ServiceLocator $prime */
         $prime = $kernel->getContainer()->get(ServiceLocator::class);
-        $this->assertEquals(new DoctrineCacheAdapter(new DoctrineProvider(new FilesystemAdapter())), $prime->mappers()->getResultCache());
+        $this->assertEquals(new DoctrineCacheAdapter(DoctrineProvider::wrap(new FilesystemAdapter())), $prime->mappers()->getResultCache());
     }
 
     /**
@@ -207,7 +207,7 @@ class BdfPrimeBundleTest extends TestCase
         $kernel = new class('test', true) extends Kernel {
             use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 
-            public function registerBundles()
+            public function registerBundles(): iterable
             {
                 return [
                     new FrameworkBundle(),
@@ -220,7 +220,7 @@ class BdfPrimeBundleTest extends TestCase
                 $loader->import(__DIR__.'/Fixtures/config.yaml');
             }
 
-            protected function configureRoutes(RouteCollectionBuilder $routes) { }
+            protected function configureRoutes($routes) { }
         };
 
         $kernel->boot();
@@ -245,7 +245,7 @@ class BdfPrimeBundleTest extends TestCase
         $kernel = new class('test', true) extends Kernel {
             use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 
-            public function registerBundles()
+            public function registerBundles(): iterable
             {
                 return [
                     new FrameworkBundle(),
@@ -258,7 +258,7 @@ class BdfPrimeBundleTest extends TestCase
                 $loader->import(__DIR__.'/Fixtures/config.yaml');
             }
 
-            protected function configureRoutes(RouteCollectionBuilder $routes) { }
+            protected function configureRoutes($routes) { }
         };
 
         $kernel->boot();

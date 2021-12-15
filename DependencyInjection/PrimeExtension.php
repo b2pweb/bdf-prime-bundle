@@ -10,7 +10,7 @@ use Bdf\Prime\Connection\Factory\MasterSlaveConnectionFactory;
 use Bdf\Prime\Connection\Factory\ShardingConnectionFactory;
 use Bdf\Prime\Mapper\MapperFactory;
 use Bdf\Prime\Types\TypesRegistryInterface;
-use Symfony\Component\Cache\DoctrineProvider;
+use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ChildDefinition;
@@ -240,6 +240,7 @@ class PrimeExtension extends Extension
         if (isset($config['pool'])) {
             if (!$container->has($namespace)) {
                 $definition = $container->register($namespace.'.doctrine-provider', DoctrineProvider::class);
+                $definition->setFactory([DoctrineProvider::class, 'wrap']);
                 $definition->addArgument(new Reference($config['pool']));
 
                 $definition = $container->register($namespace, DoctrineCacheAdapter::class);

@@ -1,5 +1,5 @@
 
-[![Build Status](https://travis-ci.com/b2pweb/bdf-prime-bundle.svg?branch=master)](https://travis-ci.com/b2pweb/bdf-prime-bundle)
+[![Build Status](https://app.travis-ci.com/b2pweb/bdf-prime-bundle.svg?branch=master)](https://app.travis-ci.com/b2pweb/bdf-prime-bundle)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/b2pweb/bdf-prime-bundle/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/b2pweb/bdf-prime-bundle/?branch=master)
 [![Packagist Version](https://img.shields.io/packagist/v/b2pweb/bdf-prime-bundle.svg)](https://packagist.org/packages/b2pweb/bdf-prime-bundle)
 [![Total Downloads](https://img.shields.io/packagist/dt/b2pweb/bdf-prime-bundle.svg)](https://packagist.org/packages/b2pweb/bdf-prime-bundle)
