@@ -15,14 +15,21 @@ install:
 script:
   - composer tests
 
+prime_version: &prime_version
+  stage: prime version
+  php: 8.0
+  script:
+    - composer require "b2pweb/bdf-prime:$PRIME_VERSION" --with-all-dependencies
+    - composer tests
+
 jobs:
   include:
-    - stage: prime versions
-      php: 8.0
+    - <<: *prime_version
       env:
         - PRIME_VERSION="~1.2.0"
+    - <<: *prime_version
+      env:
         - PRIME_VERSION="~1.3.0"
+    - <<: *prime_version
+      env:
         - PRIME_VERSION="~2.0.0"
-      script:
-        - composer require "b2pweb/bdf-prime:$PRIME_VERSION" --with-all-dependencies
-        - composer tests
