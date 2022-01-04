@@ -12,6 +12,7 @@ use Bdf\Prime\ServiceLocator;
 use Bdf\Prime\Sharding\ShardingConnection;
 use Bdf\Prime\Sharding\ShardingQuery;
 use Bdf\Prime\Types\ArrayType;
+use Bdf\Prime\Types\TypeInterface;
 use Bdf\PrimeBundle\Collector\PrimeDataCollector;
 use Bdf\PrimeBundle\DependencyInjection\Compiler\PrimeConnectionFactoryPass;
 use Bdf\PrimeBundle\PrimeBundle;
@@ -276,11 +277,47 @@ class BdfPrimeBundleTest extends TestCase
     }
 }
 
-class FooType
+class FooType implements TypeInterface
 {
+    public function fromDatabase($value, array $fieldOptions = [])
+    {
+        // TODO: Implement fromDatabase() method.
+    }
 
+    public function toDatabase($value)
+    {
+        // TODO: Implement toDatabase() method.
+    }
+
+    public function name(): string
+    {
+        // TODO: Implement name() method.
+    }
+
+    public function phpType(): string
+    {
+        // TODO: Implement phpType() method.
+    }
 }
-class BarType
+class BarType implements TypeInterface
 {
+    public function fromDatabase($value, array $fieldOptions = [])
+    {
+        // TODO: Implement fromDatabase() method.
+    }
 
+    public function toDatabase($value)
+    {
+        // TODO: Implement toDatabase() method.
+    }
+
+    public function name(): string
+    {
+        // TODO: Implement name() method.
+    }
+
+    public function phpType(): string
+    {
+        // TODO: Implement phpType() method.
+    }
 }

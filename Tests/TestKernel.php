@@ -82,7 +82,7 @@ class TestEntityMapper extends Mapper
     /**
      * {@inheritdoc}
      */
-    public function schema()
+    public function schema(): array
     {
         return [
             'connection' => 'test',
@@ -94,7 +94,7 @@ class TestEntityMapper extends Mapper
     /**
      * {@inheritdoc}
      */
-    public function buildFields($builder)
+    public function buildFields($builder): void
     {
         $builder
             ->integer('id')->autoincrement()
