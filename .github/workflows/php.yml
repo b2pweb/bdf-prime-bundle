@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-versions: ['7.1', '7.2', '7.3', '7.4', '8.0']
+    name: PHP ${{ matrix.php-versions }}
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set Timezone
+      uses: szenius/set-timezone@v1.0
+      with:
+        timezoneLinux: "Europe/Paris"
+    
+    - name: Install PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-versions }}
+        extensions: json
+        ini-values: date.timezone=Europe/Paris
+    - name: Check PHP Version
+      run: php -v
+
+    - uses: mirromutth/mysql-action@v1.1
+      with:
+        mysql version: '5.7'
+        mysql root password: 'root'
+
+    - name: Reset mysql password
+      run: |
+        # To prevent "ERROR 2013 (HY000): Lost connection to MySQL server at 'reading initial communication packet', system error: 0"
+        # See: https://github.com/mirromutth/mysql-action/issues/16
+        sleep 15
+        
+        cat <<EOF | mysql -h 127.0.0.1 -u root --password=root
+          UPDATE mysql.user SET authentication_string = null WHERE user = 'root';
+          FLUSH PRIVILEGES;
+        EOF
+
+    - name: Validate composer.json and composer.lock
+      run: composer validate --strict
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Run test suite
+      run: composer run-script tests
+
+  prime_compatibility:
+    name: Compatibility between prime versions
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        prime-versions: ['7.1', '7.2', '7.3', '7.4', '8.0']
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set Timezone
+      uses: szenius/set-timezone@v1.0
+      with:
+        timezoneLinux: "Europe/Paris"
+
+    - name: Install PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 8.0
+        extensions: json
+        ini-values: date.timezone=Europe/Paris
+
+    - uses: mirromutth/mysql-action@v1.1
+      with:
+        mysql version: '5.7'
+        mysql root password: 'root'
+
+    - name: Reset mysql password
+      run: |
+        # To prevent "ERROR 2013 (HY000): Lost connection to MySQL server at 'reading initial communication packet', system error: 0"
+        # See: https://github.com/mirromutth/mysql-action/issues/16
+        sleep 15
+        
+        cat <<EOF | mysql -h 127.0.0.1 -u root --password=root
+          UPDATE mysql.user SET authentication_string = null WHERE user = 'root';
+          FLUSH PRIVILEGES;
+        EOF
+
+    - name: Install prime ${{ matrix.prime-versions }}
+      run: composer require "b2pweb/bdf-prime:${{ matrix.prime-versions }}" --with-all-dependencies
+
+    - name: Run test suite
+      run: composer run-script tests
