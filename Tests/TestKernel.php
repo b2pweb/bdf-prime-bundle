@@ -22,8 +22,8 @@ class TestKernel extends \Symfony\Component\HttpKernel\Kernel
             new \Symfony\Bundle\FrameworkBundle\FrameworkBundle(),
             new \Symfony\Bundle\WebProfilerBundle\WebProfilerBundle(),
             new \Symfony\Bundle\TwigBundle\TwigBundle(),
+            //new \Doctrine\Bundle\DoctrineBundle\DoctrineBundle(),
             new \Bdf\PrimeBundle\PrimeBundle(),
-            new \Doctrine\Bundle\DoctrineBundle\DoctrineBundle(),
         ];
     }
 
