@@ -9,13 +9,18 @@ use Bdf\Prime\Connection\Factory\ConnectionFactory;
 use Bdf\Prime\Connection\Factory\MasterSlaveConnectionFactory;
 use Bdf\Prime\Connection\Factory\ShardingConnectionFactory;
 use Bdf\Prime\Mapper\MapperFactory;
+use Bdf\Prime\MongoDB\Collection\MongoCollectionLocator;
+use Bdf\Prime\MongoDB\Document\DocumentMapperInterface;
+use Bdf\Prime\MongoDB\Document\Hydrator\DocumentHydratorFactory;
 use Bdf\Prime\Types\TypesRegistryInterface;
 use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Config\Loader\FileLoader;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
+use Symfony\Component\DependencyInjection\ExpressionLanguage;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
@@ -40,6 +45,10 @@ class PrimeExtension extends Extension
         $this->configureConnection($config, $container);
         $this->configureMapperCache($config, $container);
         $this->configureSerializer($config, $container);
+
+        if (class_exists(MongoCollectionLocator::class)) {
+            $this->configureMongo($loader, $container, $config);
+        }
 
         $container->setParameter('prime.default_connection', $config['default_connection']);
         $container->setParameter('prime.migration.connection', $config['migration']['connection']);
@@ -132,6 +141,34 @@ class PrimeExtension extends Extension
 
             if ($ref !== null) {
                 $definition->replaceArgument(1, $ref);
+            }
+        }
+    }
+
+    /**
+     * @param FileLoader $loader
+     * @param ContainerBuilder $container
+     * @param array $config
+     * @return void
+     * @throws \Exception
+     */
+    public function configureMongo(FileLoader $loader, ContainerBuilder $container, array $config): void
+    {
+        $loader->load('prime_mongo.yaml');
+
+        $container->registerForAutoconfiguration(DocumentMapperInterface::class)
+            ->setPublic(true)
+            ->setShared(false)
+            ->setAutowired(true)
+            ->addArgument(new ExpressionLanguage())
+        ;
+
+        if (isset($config['cache']['metadata'])) {
+            $definition = $container->findDefinition(DocumentHydratorFactory::class);
+            $ref = $this->createCacheReference('prime.cache.metadata', $config['cache']['metadata'], $container);
+
+            if ($ref !== null) {
+                $definition->replaceArgument(0, $ref);
             }
         }
     }

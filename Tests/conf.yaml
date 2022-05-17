@@ -9,6 +9,7 @@ prime:
   default_connection: 'test'
   connections:
     test: 'sqlite::memory:'
+    mongo: 'mongodb://172.17.0.1/prime_test'
 
   migration:
     connection: 'test'
@@ -17,3 +18,7 @@ prime:
 services:
   logger:
     class: 'Psr\Log\NullLogger'
+
+  Bdf\PrimeBundle\Tests\Documents\:
+    resource: './Documents'
+    autoconfigure: true

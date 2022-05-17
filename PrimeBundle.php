@@ -3,6 +3,8 @@
 namespace Bdf\PrimeBundle;
 
 use Bdf\Prime\Locatorizable;
+use Bdf\Prime\MongoDB\Collection\MongoCollectionLocator;
+use Bdf\Prime\MongoDB\Mongo;
 use Bdf\Prime\ServiceLocator;
 use Bdf\PrimeBundle\DependencyInjection\Compiler\IgnorePrimeAnnotationsPass;
 use Bdf\PrimeBundle\DependencyInjection\Compiler\PrimeConnectionFactoryPass;
@@ -25,6 +27,12 @@ class PrimeBundle extends Bundle
             Locatorizable::configure(function() {
                 return $this->container->get('prime');
             });
+
+            if (class_exists(Mongo::class)) {
+                Mongo::configure(function () {
+                    return $this->container->get(MongoCollectionLocator::class);
+                });
+            }
         }
     }
 

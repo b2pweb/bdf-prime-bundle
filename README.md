@@ -13,13 +13,13 @@ Installation
 Download the latest stable version of this bundle with composer:
 
 ```bash
-    $ composer require b2pweb/bdf-prime-bundle
+composer require b2pweb/bdf-prime-bundle
 ```
 
 2 Enable the Bundle
 -------------------
 
-Adding the following line in the ``config/bundles.php`` file of your project::
+Adding the following line in the `config/bundles.php` file of your project:
 
 ```php
 <?php
