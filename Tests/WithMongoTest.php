@@ -24,6 +24,18 @@ class WithMongoTest extends TestCase
     /**
      *
      */
+    protected function setUp(): void
+    {
+        if (!class_exists(MongoCollectionLocator::class)) {
+            $this->markTestSkipped('MongoDB driver not installed');
+        }
+
+        parent::setUp();
+    }
+
+    /**
+     *
+     */
     public function test_kernel()
     {
         $kernel = new \TestKernel('dev', true);
@@ -41,7 +53,7 @@ class WithMongoTest extends TestCase
         $kernel = new \TestKernel('dev', true);
         $kernel->boot();
 
-        $kernel->getContainer()->get(CollectionSchemaResolver::class)->resolveByDocumentClass(PersonDocument::class)->migrate();
+        $kernel->getContainer()->get(CollectionSchemaResolver::class)->resolveByDomainClass(PersonDocument::class)->migrate();
 
         $person1 = new PersonDocument('John', 'Doe');
         $person2 = new PersonDocument('Jean', 'Dupont');
@@ -52,7 +64,7 @@ class WithMongoTest extends TestCase
         $this->assertEquals([$person1], PersonDocument::where('firstName', 'john')->all());
         $this->assertEquals([$person1, $person2], PersonDocument::where('lastName', (new Like('o'))->contains())->all());
 
-        $kernel->getContainer()->get(CollectionSchemaResolver::class)->resolveByDocumentClass(PersonDocument::class)->drop();
+        $kernel->getContainer()->get(CollectionSchemaResolver::class)->resolveByDomainClass(PersonDocument::class)->drop();
     }
 
     public function test_mapper_with_dependency_injection()

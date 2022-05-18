@@ -160,7 +160,6 @@ class PrimeExtension extends Extension
             ->setPublic(true)
             ->setShared(false)
             ->setAutowired(true)
-            ->addArgument(new ExpressionLanguage())
         ;
 
         if (isset($config['cache']['metadata'])) {
