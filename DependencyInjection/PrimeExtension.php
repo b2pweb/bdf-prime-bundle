@@ -4,7 +4,7 @@ namespace Bdf\PrimeBundle\DependencyInjection;
 
 use Bdf\Prime\Cache\DoctrineCacheAdapter;
 use Bdf\Prime\Configuration as PrimeConfiguration;
-use Bdf\Prime\Connection\Factory\ConnectionRegistry;
+use Bdf\Prime\Connection\ConnectionRegistry;
 use Bdf\Prime\Connection\Factory\ConnectionFactory;
 use Bdf\Prime\Connection\Factory\MasterSlaveConnectionFactory;
 use Bdf\Prime\Connection\Factory\ShardingConnectionFactory;
