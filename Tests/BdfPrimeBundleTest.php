@@ -7,7 +7,11 @@ require_once __DIR__.'/TestKernel.php';
 use Bdf\Prime\Cache\ArrayCache;
 use Bdf\Prime\Cache\DoctrineCacheAdapter;
 use Bdf\Prime\Connection\SimpleConnection;
+use Bdf\Prime\Console\UpgraderCommand;
 use Bdf\Prime\Migration\MigrationManager;
+use Bdf\Prime\Schema\RepositoryUpgrader;
+use Bdf\Prime\Schema\StructureUpgraderResolverAggregate;
+use Bdf\Prime\Schema\StructureUpgraderResolverInterface;
 use Bdf\Prime\ServiceLocator;
 use Bdf\Prime\Sharding\ShardingConnection;
 use Bdf\Prime\Sharding\ShardingQuery;
@@ -19,6 +23,7 @@ use Bdf\PrimeBundle\PrimeBundle;
 use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Doctrine\DBAL\Driver;
 use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Config\Loader\LoaderInterface;
@@ -62,6 +67,39 @@ class BdfPrimeBundleTest extends TestCase
         $this->assertSame($kernel->getContainer()->get('prime'), $kernel->getContainer()->get(ServiceLocator::class));
         $this->assertInstanceOf(MigrationManager::class, $kernel->getContainer()->get(MigrationManager::class));
         $this->assertInstanceOf(SimpleConnection::class, $kernel->getContainer()->get(ServiceLocator::class)->connection('test'));
+    }
+
+    /**
+     * @return void
+     */
+    public function test_structure_upgrader()
+    {
+        if (!interface_exists(StructureUpgraderResolverInterface::class)) {
+            $this->markTestSkipped('StructureUpgraderResolverInterface not present');
+        }
+
+        $kernel = new \TestKernel('dev', true);
+        $kernel->boot();
+
+        $this->assertInstanceOf(StructureUpgraderResolverAggregate::class, $kernel->getContainer()->get(StructureUpgraderResolverInterface::class));
+        $this->assertInstanceOf(StructureUpgraderResolverAggregate::class, $kernel->getContainer()->get(StructureUpgraderResolverAggregate::class));
+
+        $console = new Application($kernel);
+        $command = $console->get(UpgraderCommand::getDefaultName());
+        $r = new \ReflectionProperty($command, 'resolver');
+        $r->setAccessible(true);
+
+        $this->assertSame(
+            $kernel->getContainer()->get(StructureUpgraderResolverAggregate::class),
+            $r->getValue($command)
+        );
+
+        $upgrader = $kernel->getContainer()->get(StructureUpgraderResolverAggregate::class)->resolveByDomainClass(\TestEntity::class);
+
+        $this->assertInstanceOf(RepositoryUpgrader::class, $upgrader);
+        $this->assertEquals('test_', $upgrader->table()->name());
+
+        $this->assertEquals($upgrader, $kernel->getContainer()->get(StructureUpgraderResolverAggregate::class)->resolveByMapperClass(\TestEntityMapper::class));
     }
 
     /**

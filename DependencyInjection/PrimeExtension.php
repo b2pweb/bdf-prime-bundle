@@ -9,6 +9,10 @@ use Bdf\Prime\Connection\Factory\ConnectionFactory;
 use Bdf\Prime\Connection\Factory\MasterSlaveConnectionFactory;
 use Bdf\Prime\Connection\Factory\ShardingConnectionFactory;
 use Bdf\Prime\Mapper\MapperFactory;
+use Bdf\Prime\Schema\RepositoryUpgraderResolver;
+use Bdf\Prime\Schema\StructureUpgraderResolverAggregate;
+use Bdf\Prime\Schema\StructureUpgraderResolverInterface;
+use Bdf\Prime\ServiceLocator;
 use Bdf\Prime\Types\TypesRegistryInterface;
 use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Symfony\Component\Cache\Psr16Cache;
@@ -40,6 +44,10 @@ class PrimeExtension extends Extension
         $this->configureConnection($config, $container);
         $this->configureMapperCache($config, $container);
         $this->configureSerializer($config, $container);
+
+        if (interface_exists(StructureUpgraderResolverInterface::class)) {
+            $this->configureUpgrader($config, $container);
+        }
 
         $container->setParameter('prime.default_connection', $config['default_connection']);
         $container->setParameter('prime.migration.connection', $config['migration']['connection']);
@@ -134,6 +142,30 @@ class PrimeExtension extends Extension
                 $definition->replaceArgument(1, $ref);
             }
         }
+    }
+
+    /**
+     * @param array $config
+     * @param ContainerBuilder $container
+     */
+    private function configureUpgrader(array $config, ContainerBuilder $container)
+    {
+        $container->register(RepositoryUpgraderResolver::class)
+            ->addArgument(new Reference(ServiceLocator::class))
+        ;
+
+        $container->register(StructureUpgraderResolverAggregate::class)
+            ->setPublic(true)
+            ->addMethodCall('register', [new Reference(RepositoryUpgraderResolver::class)])
+        ;
+
+        $container->setAlias(StructureUpgraderResolverInterface::class, StructureUpgraderResolverAggregate::class)
+            ->setPublic(true)
+        ;
+
+        $container->findDefinition('prime.upgrade_command')
+            ->replaceArgument(0, new Reference(StructureUpgraderResolverInterface::class))
+        ;
     }
 
     /**
