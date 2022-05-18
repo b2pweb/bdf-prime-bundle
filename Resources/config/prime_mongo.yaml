@@ -6,8 +6,8 @@ services:
       - '@Bdf\Prime\ConnectionManager'
       - '@Bdf\Prime\MongoDB\Document\Factory\DocumentMapperFactoryInterface'
 
-  Bdf\Prime\MongoDB\Schema\CollectionSchemaResolver:
-    class: Bdf\Prime\MongoDB\Schema\CollectionSchemaResolver
+  Bdf\Prime\MongoDB\Schema\CollectionStructureUpgraderResolver:
+    class: Bdf\Prime\MongoDB\Schema\CollectionStructureUpgraderResolver
     public: true
     arguments:
       - '@Bdf\Prime\MongoDB\Collection\MongoCollectionLocator'

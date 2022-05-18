@@ -12,6 +12,8 @@ use Bdf\Prime\Mapper\MapperFactory;
 use Bdf\Prime\MongoDB\Collection\MongoCollectionLocator;
 use Bdf\Prime\MongoDB\Document\DocumentMapperInterface;
 use Bdf\Prime\MongoDB\Document\Hydrator\DocumentHydratorFactory;
+use Bdf\Prime\MongoDB\Schema\CollectionStructureUpgrader;
+use Bdf\Prime\MongoDB\Schema\CollectionStructureUpgraderResolver;
 use Bdf\Prime\Schema\RepositoryUpgraderResolver;
 use Bdf\Prime\Schema\StructureUpgraderResolverAggregate;
 use Bdf\Prime\Schema\StructureUpgraderResolverInterface;
@@ -49,12 +51,12 @@ class PrimeExtension extends Extension
         $this->configureMapperCache($config, $container);
         $this->configureSerializer($config, $container);
 
-        if (class_exists(MongoCollectionLocator::class)) {
-            $this->configureMongo($loader, $container, $config);
-        }
-
         if (interface_exists(StructureUpgraderResolverInterface::class)) {
             $this->configureUpgrader($config, $container);
+        }
+
+        if (class_exists(MongoCollectionLocator::class)) {
+            $this->configureMongo($loader, $container, $config);
         }
 
         $container->setParameter('prime.default_connection', $config['default_connection']);
@@ -176,6 +178,10 @@ class PrimeExtension extends Extension
                 $definition->replaceArgument(0, $ref);
             }
         }
+
+        $container->findDefinition(StructureUpgraderResolverAggregate::class)
+            ->addMethodCall('register', [new Reference(CollectionStructureUpgraderResolver::class)])
+        ;
     }
 
     /**

@@ -9,7 +9,10 @@ use Bdf\Prime\MongoDB\Document\DocumentMapper;
 use Bdf\Prime\MongoDB\Document\MongoDocument;
 use Bdf\Prime\MongoDB\Schema\CollectionDefinitionBuilder;
 use Bdf\Prime\MongoDB\Schema\CollectionSchemaResolver;
+use Bdf\Prime\MongoDB\Schema\CollectionStructureUpgrader;
+use Bdf\Prime\MongoDB\Schema\CollectionStructureUpgraderResolver;
 use Bdf\Prime\Query\Expression\Like;
+use Bdf\Prime\Schema\StructureUpgraderResolverAggregate;
 use Bdf\PrimeBundle\PrimeBundle;
 use Bdf\PrimeBundle\Tests\Documents\MapperWithDependency;
 use Bdf\PrimeBundle\Tests\Documents\OtherDocumentMapper;
@@ -65,7 +68,7 @@ class WithMongoTest extends TestCase
     public function test_kernel()
     {
         $this->assertInstanceOf(MongoCollectionLocator::class, $this->kernel->getContainer()->get(MongoCollectionLocator::class));
-        $this->assertInstanceOf(CollectionSchemaResolver::class, $this->kernel->getContainer()->get(CollectionSchemaResolver::class));
+        $this->assertInstanceOf(CollectionStructureUpgraderResolver::class, $this->kernel->getContainer()->get(CollectionStructureUpgraderResolver::class));
     }
 
     /**
@@ -73,7 +76,7 @@ class WithMongoTest extends TestCase
      */
     public function test_functional()
     {
-        $this->kernel->getContainer()->get(CollectionSchemaResolver::class)->resolveByDomainClass(PersonDocument::class)->migrate();
+        $this->kernel->getContainer()->get(CollectionStructureUpgraderResolver::class)->resolveByDomainClass(PersonDocument::class)->migrate();
 
         $person1 = new PersonDocument('John', 'Doe');
         $person2 = new PersonDocument('Jean', 'Dupont');
@@ -84,7 +87,7 @@ class WithMongoTest extends TestCase
         $this->assertEquals([$person1], PersonDocument::where('firstName', 'john')->all());
         $this->assertEquals([$person1, $person2], PersonDocument::where('lastName', (new Like('o'))->contains())->all());
 
-        $this->kernel->getContainer()->get(CollectionSchemaResolver::class)->resolveByDomainClass(PersonDocument::class)->drop();
+        $this->kernel->getContainer()->get(CollectionStructureUpgraderResolver::class)->resolveByDomainClass(PersonDocument::class)->drop();
     }
 
     public function test_mapper_with_dependency_injection()
@@ -113,5 +116,15 @@ class WithMongoTest extends TestCase
         $r->setAccessible(true);
 
         $this->assertSame($r->getValue($c1->mapper()), $r->getValue($c2->mapper()));
+    }
+
+    public function test_upgrader()
+    {
+        if (!class_exists(StructureUpgraderResolverAggregate::class)) {
+            $this->markTestSkipped('StructureUpgraderResolverAggregate is not found');
+        }
+
+        $this->assertInstanceOf(CollectionStructureUpgrader::class, $this->kernel->getContainer()->get(StructureUpgraderResolverAggregate::class)->resolveByDomainClass(PersonDocument::class));
+        $this->assertInstanceOf(CollectionStructureUpgrader::class, $this->kernel->getContainer()->get(StructureUpgraderResolverAggregate::class)->resolveByMapperClass(PersonDocumentMapper::class));
     }
 }
