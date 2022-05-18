@@ -4,7 +4,7 @@ namespace Bdf\PrimeBundle\DependencyInjection;
 
 use Bdf\Prime\Cache\DoctrineCacheAdapter;
 use Bdf\Prime\Configuration as PrimeConfiguration;
-use Bdf\Prime\Connection\ConnectionRegistry;
+use Bdf\Prime\Connection\Factory\ConnectionRegistry;
 use Bdf\Prime\Connection\Factory\ConnectionFactory;
 use Bdf\Prime\Connection\Factory\MasterSlaveConnectionFactory;
 use Bdf\Prime\Connection\Factory\ShardingConnectionFactory;
@@ -12,6 +12,10 @@ use Bdf\Prime\Mapper\MapperFactory;
 use Bdf\Prime\MongoDB\Collection\MongoCollectionLocator;
 use Bdf\Prime\MongoDB\Document\DocumentMapperInterface;
 use Bdf\Prime\MongoDB\Document\Hydrator\DocumentHydratorFactory;
+use Bdf\Prime\Schema\RepositoryUpgraderResolver;
+use Bdf\Prime\Schema\StructureUpgraderResolverAggregate;
+use Bdf\Prime\Schema\StructureUpgraderResolverInterface;
+use Bdf\Prime\ServiceLocator;
 use Bdf\Prime\Types\TypesRegistryInterface;
 use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Symfony\Component\Cache\Psr16Cache;
@@ -20,7 +24,6 @@ use Symfony\Component\Config\Loader\FileLoader;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
-use Symfony\Component\DependencyInjection\ExpressionLanguage;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
@@ -48,6 +51,10 @@ class PrimeExtension extends Extension
 
         if (class_exists(MongoCollectionLocator::class)) {
             $this->configureMongo($loader, $container, $config);
+        }
+
+        if (interface_exists(StructureUpgraderResolverInterface::class)) {
+            $this->configureUpgrader($config, $container);
         }
 
         $container->setParameter('prime.default_connection', $config['default_connection']);
@@ -159,8 +166,7 @@ class PrimeExtension extends Extension
         $container->registerForAutoconfiguration(DocumentMapperInterface::class)
             ->setPublic(true)
             ->setShared(false)
-            ->setAutowired(true)
-        ;
+            ->setAutowired(true);
 
         if (isset($config['cache']['metadata'])) {
             $definition = $container->findDefinition(DocumentHydratorFactory::class);
@@ -170,6 +176,30 @@ class PrimeExtension extends Extension
                 $definition->replaceArgument(0, $ref);
             }
         }
+    }
+
+    /**
+     * @param array $config
+     * @param ContainerBuilder $container
+     */
+    private function configureUpgrader(array $config, ContainerBuilder $container)
+    {
+        $container->register(RepositoryUpgraderResolver::class)
+            ->addArgument(new Reference(ServiceLocator::class))
+        ;
+
+        $container->register(StructureUpgraderResolverAggregate::class)
+            ->setPublic(true)
+            ->addMethodCall('register', [new Reference(RepositoryUpgraderResolver::class)])
+        ;
+
+        $container->setAlias(StructureUpgraderResolverInterface::class, StructureUpgraderResolverAggregate::class)
+            ->setPublic(true)
+        ;
+
+        $container->findDefinition('prime.upgrade_command')
+            ->replaceArgument(0, new Reference(StructureUpgraderResolverInterface::class))
+        ;
     }
 
     /**
