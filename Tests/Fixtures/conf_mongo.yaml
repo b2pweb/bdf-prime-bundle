@@ -1,9 +1,5 @@
 framework:
   secret: '%env(APP_SECRET)%'
-  profiler:
-    enabled: true
-web_profiler:
-  toolbar: true
 prime:
   activerecord: true
   default_connection: 'test'
@@ -14,7 +10,10 @@ prime:
   migration:
     connection: 'test'
     path: '%kernel.project_dir%/src/Migration'
-  profiling: true
 services:
   logger:
     class: 'Psr\Log\NullLogger'
+
+  Bdf\PrimeBundle\Tests\Documents\:
+    resource: '../Documents'
+    autoconfigure: true

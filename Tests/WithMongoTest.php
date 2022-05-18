@@ -10,17 +10,24 @@ use Bdf\Prime\MongoDB\Document\MongoDocument;
 use Bdf\Prime\MongoDB\Schema\CollectionDefinitionBuilder;
 use Bdf\Prime\MongoDB\Schema\CollectionSchemaResolver;
 use Bdf\Prime\Query\Expression\Like;
+use Bdf\PrimeBundle\PrimeBundle;
 use Bdf\PrimeBundle\Tests\Documents\MapperWithDependency;
 use Bdf\PrimeBundle\Tests\Documents\OtherDocumentMapper;
 use Bdf\PrimeBundle\Tests\Documents\PersonDocument;
 use Bdf\PrimeBundle\Tests\Documents\PersonDocumentMapper;
 use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
+use Symfony\Component\Config\Loader\LoaderInterface;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\HttpKernel\Kernel;
 
 /**
  * BdfSerializerBundleTest
  */
 class WithMongoTest extends TestCase
 {
+    private $kernel;
+
     /**
      *
      */
@@ -30,7 +37,26 @@ class WithMongoTest extends TestCase
             $this->markTestSkipped('MongoDB driver not installed');
         }
 
-        parent::setUp();
+
+        $this->kernel = new class('test', true) extends Kernel {
+            use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+
+            public function registerBundles(): iterable
+            {
+                return [
+                    new FrameworkBundle(),
+                    new PrimeBundle(),
+                ];
+            }
+
+            protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)
+            {
+                $loader->import(__DIR__.'/Fixtures/conf_mongo.yaml');
+            }
+
+            protected function configureRoutes($routes) { }
+        };
+        $this->kernel->boot();
     }
 
     /**
@@ -38,11 +64,8 @@ class WithMongoTest extends TestCase
      */
     public function test_kernel()
     {
-        $kernel = new \TestKernel('dev', true);
-        $kernel->boot();
-
-        $this->assertInstanceOf(MongoCollectionLocator::class, $kernel->getContainer()->get(MongoCollectionLocator::class));
-        $this->assertInstanceOf(CollectionSchemaResolver::class, $kernel->getContainer()->get(CollectionSchemaResolver::class));
+        $this->assertInstanceOf(MongoCollectionLocator::class, $this->kernel->getContainer()->get(MongoCollectionLocator::class));
+        $this->assertInstanceOf(CollectionSchemaResolver::class, $this->kernel->getContainer()->get(CollectionSchemaResolver::class));
     }
 
     /**
@@ -50,10 +73,7 @@ class WithMongoTest extends TestCase
      */
     public function test_functional()
     {
-        $kernel = new \TestKernel('dev', true);
-        $kernel->boot();
-
-        $kernel->getContainer()->get(CollectionSchemaResolver::class)->resolveByDomainClass(PersonDocument::class)->migrate();
+        $this->kernel->getContainer()->get(CollectionSchemaResolver::class)->resolveByDomainClass(PersonDocument::class)->migrate();
 
         $person1 = new PersonDocument('John', 'Doe');
         $person2 = new PersonDocument('Jean', 'Dupont');
@@ -64,16 +84,13 @@ class WithMongoTest extends TestCase
         $this->assertEquals([$person1], PersonDocument::where('firstName', 'john')->all());
         $this->assertEquals([$person1, $person2], PersonDocument::where('lastName', (new Like('o'))->contains())->all());
 
-        $kernel->getContainer()->get(CollectionSchemaResolver::class)->resolveByDomainClass(PersonDocument::class)->drop();
+        $this->kernel->getContainer()->get(CollectionSchemaResolver::class)->resolveByDomainClass(PersonDocument::class)->drop();
     }
 
     public function test_mapper_with_dependency_injection()
     {
-        $kernel = new \TestKernel('dev', true);
-        $kernel->boot();
-
         /** @var MongoCollectionLocator $locator */
-        $locator = $kernel->getContainer()->get(MongoCollectionLocator::class);
+        $locator = $this->kernel->getContainer()->get(MongoCollectionLocator::class);
 
         $collection = $locator->collectionByMapper(MapperWithDependency::class);
 
@@ -83,11 +100,8 @@ class WithMongoTest extends TestCase
 
     public function test_same_hydrator_instance_should_be_used()
     {
-        $kernel = new \TestKernel('dev', true);
-        $kernel->boot();
-
         /** @var MongoCollectionLocator $locator */
-        $locator = $kernel->getContainer()->get(MongoCollectionLocator::class);
+        $locator = $this->kernel->getContainer()->get(MongoCollectionLocator::class);
 
         $c1 = $locator->collectionByMapper(OtherDocumentMapper::class);
         $c2 = $locator->collectionByMapper(PersonDocumentMapper::class);
