@@ -101,7 +101,7 @@ jobs:
       run: composer run-script tests
 
   with_mongo:
-    name: Compatibility between prime versions
+    name: Compatibility with MongoDB driver
     runs-on: ubuntu-latest
 
     steps:
@@ -134,6 +134,9 @@ jobs:
           UPDATE mysql.user SET authentication_string = null WHERE user = 'root';
           FLUSH PRIVILEGES;
         EOF
+
+    - name: MongoDB in GitHub Actions
+      uses: supercharge/mongodb-github-action@1.7.0
 
     - name: Install mongo driver
       run: composer require "b2pweb/bdf-prime-mongodb:dev-prime-2-compatibility" --with-all-dependencies
