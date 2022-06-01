@@ -40,8 +40,6 @@ services:
       - '@Bdf\Prime\Entity\Instantiator\InstantiatorInterface'
     calls:
       - [setDI, ['@service_container']]
-    tags:
-      - { name: 'kernel.reset', method: 'clearRepositories' }
 
 
   # Connection
