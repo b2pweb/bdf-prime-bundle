@@ -11,7 +11,6 @@ use Bdf\Prime\Connection\Factory\ShardingConnectionFactory;
 use Bdf\Prime\Mapper\MapperFactory;
 use Bdf\Prime\MongoDB\Collection\MongoCollectionLocator;
 use Bdf\Prime\MongoDB\Document\DocumentMapperInterface;
-use Bdf\Prime\MongoDB\Document\Hydrator\DocumentHydratorFactory;
 use Bdf\Prime\MongoDB\Schema\CollectionStructureUpgrader;
 use Bdf\Prime\MongoDB\Schema\CollectionStructureUpgraderResolver;
 use Bdf\Prime\Schema\RepositoryUpgraderResolver;
@@ -171,7 +170,7 @@ class PrimeExtension extends Extension
             ->setAutowired(true);
 
         if (isset($config['cache']['metadata'])) {
-            $definition = $container->findDefinition(DocumentHydratorFactory::class);
+            $definition = $container->findDefinition('prime_mongodb_serializer');
             $ref = $this->createCacheReference('prime.cache.metadata', $config['cache']['metadata'], $container);
 
             if ($ref !== null) {
