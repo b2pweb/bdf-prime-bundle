@@ -1,9 +1,37 @@
+v1.4.1
+------
+
+ * Fix: Remove kernel.reset registration of the ServiceLocator.
+
+v1.4.0
+------
+
+ * Imp: Handle new StructureUpgraderResolver system.
+ * Fix: Remove dependency to symfony/service-contracts.
+ * Imp: Add compatibility with symfony 6.
+
+v1.3.1
+------
+
+ * Imp: Add support of PHP 8.1.
+
+v1.3.0
+------
+
+ * Imp: PHP 8.0 compatibility.
+
+v1.2.1
+------
+
+ * Fix: Compatibility with prime 2.0.
+ * Feat: Adding the run sql command.
+
 v1.2.0
 ------
 
-* Feat: Migration to prime 1.2.
-* Feat: Adding support of configuration by connection.
-* Fix: Remove bdf serializer annotations from doctrine annotations reader.
-* Imp: Improve loading of configuration of connection.
-* Imp: Compatibility with symfony 5.3.
-* Doc: Update the documentation of the configuration
+ * Feat: Migration to prime 1.2.
+ * Feat: Adding support of configuration by connection.
+ * Fix: Remove bdf serializer annotations from doctrine annotations reader.
+ * Imp: Improve loading of configuration of connection.
+ * Imp: Compatibility with symfony 5.3.
+ * Doc: Update the documentation of the configuration
