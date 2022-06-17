@@ -139,7 +139,7 @@ jobs:
       uses: supercharge/mongodb-github-action@1.7.0
 
     - name: Install mongo driver
-      run: composer require "b2pweb/bdf-prime-mongodb:dev-prime-2-compatibility" --with-all-dependencies
+      run: composer require "b2pweb/bdf-prime-mongodb:~2.0" --with-all-dependencies
 
     - name: Run test suite
       run: composer run-script tests
