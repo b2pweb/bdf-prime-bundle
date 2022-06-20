@@ -115,10 +115,10 @@ class BdfPrimeBundleTest extends TestCase
         $this->assertInstanceOf(PrimeDataCollector::class, $collector);
         $kernel->handle(Request::create('http://127.0.0.1/'));
 
-        $isDoctrine2 = method_exists(Driver::class, 'getDatabase');
+        $this->assertGreaterThanOrEqual(3, $collector->getQueryCount());
 
-        $this->assertEquals($isDoctrine2 ? 3 : 4, $collector->getQueryCount()); // Doctrine 3 always perform a select query on Connection::getDatabase()
-        $this->assertEquals('SELECT * FROM test_ WHERE id = ? LIMIT 1', $collector->getQueries()[''][$isDoctrine2 ? 3 : 4]['sql']);
+        $queries = array_map(function ($entry) { return $entry['sql']; }, $collector->getQueries()['']);
+        $this->assertContains('SELECT * FROM test_ WHERE id = ? LIMIT 1', $queries);
     }
 
     /**
