@@ -9,6 +9,10 @@ use Bdf\Prime\Connection\Factory\ConnectionFactory;
 use Bdf\Prime\Connection\Factory\MasterSlaveConnectionFactory;
 use Bdf\Prime\Connection\Factory\ShardingConnectionFactory;
 use Bdf\Prime\Mapper\MapperFactory;
+use Bdf\Prime\MongoDB\Collection\MongoCollectionLocator;
+use Bdf\Prime\MongoDB\Document\DocumentMapperInterface;
+use Bdf\Prime\MongoDB\Schema\CollectionStructureUpgrader;
+use Bdf\Prime\MongoDB\Schema\CollectionStructureUpgraderResolver;
 use Bdf\Prime\Schema\RepositoryUpgraderResolver;
 use Bdf\Prime\Schema\StructureUpgraderResolverAggregate;
 use Bdf\Prime\Schema\StructureUpgraderResolverInterface;
@@ -17,6 +21,7 @@ use Bdf\Prime\Types\TypesRegistryInterface;
 use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Config\Loader\FileLoader;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
@@ -47,6 +52,10 @@ class PrimeExtension extends Extension
 
         if (interface_exists(StructureUpgraderResolverInterface::class)) {
             $this->configureUpgrader($config, $container);
+        }
+
+        if (class_exists(MongoCollectionLocator::class)) {
+            $this->configureMongo($loader, $container, $config);
         }
 
         $container->setParameter('prime.default_connection', $config['default_connection']);
@@ -142,6 +151,36 @@ class PrimeExtension extends Extension
                 $definition->replaceArgument(1, $ref);
             }
         }
+    }
+
+    /**
+     * @param FileLoader $loader
+     * @param ContainerBuilder $container
+     * @param array $config
+     * @return void
+     * @throws \Exception
+     */
+    public function configureMongo(FileLoader $loader, ContainerBuilder $container, array $config): void
+    {
+        $loader->load('prime_mongo.yaml');
+
+        $container->registerForAutoconfiguration(DocumentMapperInterface::class)
+            ->setPublic(true)
+            ->setShared(false)
+            ->setAutowired(true);
+
+        if (isset($config['cache']['metadata'])) {
+            $definition = $container->findDefinition('prime_mongodb_serializer');
+            $ref = $this->createCacheReference('prime.cache.metadata', $config['cache']['metadata'], $container);
+
+            if ($ref !== null) {
+                $definition->replaceArgument(0, $ref);
+            }
+        }
+
+        $container->findDefinition(StructureUpgraderResolverAggregate::class)
+            ->addMethodCall('register', [new Reference(CollectionStructureUpgraderResolver::class)])
+        ;
     }
 
     /**

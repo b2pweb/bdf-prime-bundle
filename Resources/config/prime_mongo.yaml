@@ -1,0 +1,49 @@
+services:
+  Bdf\Prime\MongoDB\Collection\MongoCollectionLocator:
+    class: Bdf\Prime\MongoDB\Collection\MongoCollectionLocator
+    public: true
+    arguments:
+      - '@Bdf\Prime\ConnectionManager'
+      - '@Bdf\Prime\MongoDB\Document\Factory\DocumentMapperFactoryInterface'
+
+  Bdf\Prime\MongoDB\Schema\CollectionStructureUpgraderResolver:
+    class: Bdf\Prime\MongoDB\Schema\CollectionStructureUpgraderResolver
+    public: true
+    arguments:
+      - '@Bdf\Prime\MongoDB\Collection\MongoCollectionLocator'
+
+  Bdf\Prime\MongoDB\Document\Factory\DocumentMapperFactoryInterface:
+    alias: Bdf\Prime\MongoDB\Document\Factory\DocumentMapperFactory
+    public: false
+
+  Bdf\Prime\MongoDB\Document\Factory\DocumentMapperFactory:
+    class: Bdf\Prime\MongoDB\Document\Factory\DocumentMapperFactory
+    public: false
+    arguments:
+      - '@Bdf\Prime\MongoDB\Document\Factory\DocumentMapperClassResolverInterface'
+      - '@Bdf\Prime\MongoDB\Document\Factory\DocumentMapperIntantiatorInterface'
+
+  Bdf\Prime\MongoDB\Document\Factory\DocumentMapperClassResolverInterface:
+    alias: Bdf\Prime\MongoDB\Document\Factory\SuffixedMapperClassResolver
+
+  Bdf\Prime\MongoDB\Document\Factory\SuffixedMapperClassResolver:
+    class: Bdf\Prime\MongoDB\Document\Factory\SuffixedMapperClassResolver
+
+  Bdf\Prime\MongoDB\Document\Factory\DocumentMapperIntantiatorInterface:
+    alias: Bdf\Prime\MongoDB\Document\Factory\ContainerMapperInstantiator
+
+  Bdf\Prime\MongoDB\Document\Factory\ContainerMapperInstantiator:
+    class: Bdf\Prime\MongoDB\Document\Factory\ContainerMapperInstantiator
+    public: false
+    arguments: ['@service_container']
+
+  Bdf\Prime\MongoDB\Document\Hydrator\DocumentHydratorFactory:
+    class: Bdf\Prime\MongoDB\Document\Hydrator\DocumentHydratorFactory
+    arguments:
+      - '@prime_mongodb_serializer'
+
+  prime_mongodb_serializer:
+    class: Bdf\Serializer\Serializer
+    factory: ['Bdf\Prime\MongoDB\Document\Hydrator\BdfDocumentHydrator', 'createDefaultSerializer']
+    arguments:
+      - null
