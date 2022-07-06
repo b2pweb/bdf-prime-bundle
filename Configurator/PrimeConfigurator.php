@@ -14,8 +14,6 @@ class PrimeConfigurator
 
     /**
      * PrimeFactory constructor.
-     *
-     * @param ContainerInterface $container
      */
     public function __construct(ContainerInterface $container)
     {
@@ -23,7 +21,7 @@ class PrimeConfigurator
     }
 
     /**
-     * Create the repository instance
+     * Create the repository instance.
      */
     public function configurePrime(ServiceLocator $service)
     {
@@ -35,12 +33,12 @@ class PrimeConfigurator
     }
 
     /**
-     * Create the repository instance
+     * Create the repository instance.
      */
     private function configureHydrator(ServiceLocator $service, string $loader)
     {
         if (is_file($loader)) {
-            $launcher = function() use($service, $loader) {
+            $launcher = function () use ($service, $loader) {
                 $registry = $service->hydrators();
 
                 include $loader;

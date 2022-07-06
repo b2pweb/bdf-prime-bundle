@@ -12,7 +12,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 /**
- * PrimeBundle
+ * PrimeBundle.
  *
  * @author Seb
  */
@@ -24,7 +24,7 @@ class PrimeBundle extends Bundle
     public function boot()
     {
         if ($this->container->getParameter('prime.locatorizable')) {
-            Locatorizable::configure(function() {
+            Locatorizable::configure(function () {
                 return $this->container->get('prime');
             });
 

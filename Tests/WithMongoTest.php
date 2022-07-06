@@ -6,9 +6,6 @@ require_once __DIR__.'/TestKernel.php';
 
 use Bdf\Prime\MongoDB\Collection\MongoCollectionLocator;
 use Bdf\Prime\MongoDB\Document\DocumentMapper;
-use Bdf\Prime\MongoDB\Document\MongoDocument;
-use Bdf\Prime\MongoDB\Schema\CollectionDefinitionBuilder;
-use Bdf\Prime\MongoDB\Schema\CollectionSchemaResolver;
 use Bdf\Prime\MongoDB\Schema\CollectionStructureUpgrader;
 use Bdf\Prime\MongoDB\Schema\CollectionStructureUpgraderResolver;
 use Bdf\Prime\Query\Expression\Like;
@@ -25,21 +22,17 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Kernel;
 
 /**
- * BdfSerializerBundleTest
+ * BdfSerializerBundleTest.
  */
 class WithMongoTest extends TestCase
 {
     private $kernel;
 
-    /**
-     *
-     */
     protected function setUp(): void
     {
         if (!class_exists(MongoCollectionLocator::class)) {
             $this->markTestSkipped('MongoDB driver not installed');
         }
-
 
         $this->kernel = new class('test', true) extends Kernel {
             use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
@@ -57,24 +50,20 @@ class WithMongoTest extends TestCase
                 $loader->import(__DIR__.'/Fixtures/conf_mongo.yaml');
             }
 
-            protected function configureRoutes($routes) { }
+            protected function configureRoutes($routes)
+            {
+            }
         };
         $this->kernel->boot();
     }
 
-    /**
-     *
-     */
-    public function test_kernel()
+    public function testKernel()
     {
         $this->assertInstanceOf(MongoCollectionLocator::class, $this->kernel->getContainer()->get(MongoCollectionLocator::class));
         $this->assertInstanceOf(CollectionStructureUpgraderResolver::class, $this->kernel->getContainer()->get(CollectionStructureUpgraderResolver::class));
     }
 
-    /**
-     *
-     */
-    public function test_functional()
+    public function testFunctional()
     {
         $this->kernel->getContainer()->get(CollectionStructureUpgraderResolver::class)->resolveByDomainClass(PersonDocument::class)->migrate();
 
@@ -90,7 +79,7 @@ class WithMongoTest extends TestCase
         $this->kernel->getContainer()->get(CollectionStructureUpgraderResolver::class)->resolveByDomainClass(PersonDocument::class)->drop();
     }
 
-    public function test_mapper_with_dependency_injection()
+    public function testMapperWithDependencyInjection()
     {
         /** @var MongoCollectionLocator $locator */
         $locator = $this->kernel->getContainer()->get(MongoCollectionLocator::class);
@@ -101,7 +90,7 @@ class WithMongoTest extends TestCase
         $this->assertSame($locator, $collection->mapper()->locator);
     }
 
-    public function test_same_hydrator_instance_should_be_used()
+    public function testSameHydratorInstanceShouldBeUsed()
     {
         /** @var MongoCollectionLocator $locator */
         $locator = $this->kernel->getContainer()->get(MongoCollectionLocator::class);
@@ -118,7 +107,7 @@ class WithMongoTest extends TestCase
         $this->assertSame($r->getValue($c1->mapper()), $r->getValue($c2->mapper()));
     }
 
-    public function test_upgrader()
+    public function testUpgrader()
     {
         if (!class_exists(StructureUpgraderResolverAggregate::class)) {
             $this->markTestSkipped('StructureUpgraderResolverAggregate is not found');

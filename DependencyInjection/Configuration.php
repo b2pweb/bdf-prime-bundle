@@ -8,7 +8,7 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
- * Configuration
+ * Configuration.
  */
 class Configuration implements ConfigurationInterface
 {
@@ -51,9 +51,7 @@ class Configuration implements ConfigurationInterface
 
     /**
      * Adds the configuration node of the connection
-     * Could be the global config or a connection config
-     *
-     * @param ArrayNodeDefinition $node
+     * Could be the global config or a connection config.
      */
     private function configureConfigurationNode(ArrayNodeDefinition $node, bool $addDefault): void
     {
@@ -63,7 +61,7 @@ class Configuration implements ConfigurationInterface
         $profilingNode = $parametersNode->booleanNode('profiling');
         $autoCommitNode = $parametersNode->booleanNode('auto_commit');
 
-        if ($addDefault === true) {
+        if (true === $addDefault) {
             $loggingNode->defaultValue($this->debug);
             $profilingNode->defaultValue($this->debug);
             $autoCommitNode->defaultNull();
@@ -132,7 +130,7 @@ class Configuration implements ConfigurationInterface
     }
 
     /**
-     * Adds config keys related to params processed by the DBAL drivers
+     * Adds config keys related to params processed by the DBAL drivers.
      *
      * These keys are available for slave configurations too.
      */
@@ -158,7 +156,7 @@ class Configuration implements ConfigurationInterface
                 ->end()
                 ->scalarNode('servicename')
                     ->info(
-                        'Overrules dbname parameter if given and used as SERVICE_NAME or SID connection parameter ' .
+                        'Overrules dbname parameter if given and used as SERVICE_NAME or SID connection parameter '.
                         'for Oracle depending on the service parameter.'
                     )
                 ->end()
@@ -175,13 +173,13 @@ class Configuration implements ConfigurationInterface
                 ->end()
                 ->scalarNode('sslmode')
                     ->info(
-                        'Determines whether or with what priority a SSL TCP/IP connection will be negotiated with ' .
+                        'Determines whether or with what priority a SSL TCP/IP connection will be negotiated with '.
                         'the server for PostgreSQL.'
                     )
                 ->end()
                 ->scalarNode('sslrootcert')
                     ->info(
-                        'The name of a file containing SSL certificate authority (CA) certificate(s). ' .
+                        'The name of a file containing SSL certificate authority (CA) certificate(s). '.
                         'If the file exists, the server\'s certificate will be verified to be signed by one of these authorities.'
                     )
                 ->end()
@@ -205,23 +203,23 @@ class Configuration implements ConfigurationInterface
 //                ->booleanNode('use_savepoints')->info('Use savepoints for nested transactions')->end()
                 ->scalarNode('instancename')
                     ->info(
-                        'Optional parameter, complete whether to add the INSTANCE_NAME parameter in the connection.' .
-                        ' It is generally used to connect to an Oracle RAC server to select the name' .
+                        'Optional parameter, complete whether to add the INSTANCE_NAME parameter in the connection.'.
+                        ' It is generally used to connect to an Oracle RAC server to select the name'.
                         ' of a particular instance.'
                     )
                 ->end()
                 ->scalarNode('connectstring')
                     ->info(
-                        'Complete Easy Connect connection descriptor, see https://docs.oracle.com/database/121/NETAG/naming.htm.' .
-                        'When using this option, you will still need to provide the user and password parameters, but the other ' .
-                        'parameters will no longer be used. Note that when using this parameter, the getHost and getPort methods' .
+                        'Complete Easy Connect connection descriptor, see https://docs.oracle.com/database/121/NETAG/naming.htm.'.
+                        'When using this option, you will still need to provide the user and password parameters, but the other '.
+                        'parameters will no longer be used. Note that when using this parameter, the getHost and getPort methods'.
                         ' from Doctrine\DBAL\Connection will no longer function as expected.'
                     )
                 ->end()
             ->end()
             ->beforeNormalization()
                 ->ifTrue(static function ($v) {
-                    return ! isset($v['sessionMode']) && isset($v['session_mode']);
+                    return !isset($v['sessionMode']) && isset($v['session_mode']);
                 })
                 ->then(static function ($v) {
                     $v['sessionMode'] = $v['session_mode'];
@@ -232,7 +230,7 @@ class Configuration implements ConfigurationInterface
             ->end()
             ->beforeNormalization()
                 ->ifTrue(static function ($v) {
-                    return ! isset($v['MultipleActiveResultSets']) && isset($v['multiple_active_result_sets']);
+                    return !isset($v['MultipleActiveResultSets']) && isset($v['multiple_active_result_sets']);
                 })
                 ->then(static function ($v) {
                     $v['MultipleActiveResultSets'] = $v['multiple_active_result_sets'];
@@ -254,7 +252,7 @@ class Configuration implements ConfigurationInterface
             ->arrayPrototype()
             ->beforeNormalization()
             ->ifString()
-            ->then(static function($v) {
+            ->then(static function ($v) {
                 return ['class' => $v];
             })
             ->end()

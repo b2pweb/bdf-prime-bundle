@@ -1,15 +1,9 @@
 <?php
 
-use Bdf\Prime\Entity\InitializableInterface;
 use Bdf\Prime\Entity\Model;
 use Bdf\Prime\Mapper\Mapper;
-use Bdf\Prime\Query\Custom\KeyValue\KeyValueQuery;
-use Bdf\Prime\Repository\EntityRepository;
-use Bdf\Prime\TestEmbeddedEntity;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 use Symfony\Component\Routing\RouteCollectionBuilder;
 
 class TestKernel extends \Symfony\Component\HttpKernel\Kernel
@@ -22,14 +16,14 @@ class TestKernel extends \Symfony\Component\HttpKernel\Kernel
             new \Symfony\Bundle\FrameworkBundle\FrameworkBundle(),
             new \Symfony\Bundle\WebProfilerBundle\WebProfilerBundle(),
             new \Symfony\Bundle\TwigBundle\TwigBundle(),
-            //new \Doctrine\Bundle\DoctrineBundle\DoctrineBundle(),
+            // new \Doctrine\Bundle\DoctrineBundle\DoctrineBundle(),
             new \Bdf\PrimeBundle\PrimeBundle(),
         ];
     }
 
     protected function configureRoutes($routes)
     {
-        //$routes->add('index', '/')->controller([$this, 'indexAction']);
+        // $routes->add('index', '/')->controller([$this, 'indexAction']);
         if ($routes instanceof RouteCollectionBuilder) {
             $routes->add('/', 'kernel::indexAction');
             $routes->import('@WebProfilerBundle/Resources/config/routing/wdt.xml', '/_wdt');
@@ -44,7 +38,7 @@ class TestKernel extends \Symfony\Component\HttpKernel\Kernel
     protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)
     {
         $loader->load(__DIR__.'/conf.yaml');
-        //$c->import(__DIR__.'/conf.yaml');
+        // $c->import(__DIR__.'/conf.yaml');
     }
 
     public function indexAction()
@@ -58,10 +52,9 @@ class TestKernel extends \Symfony\Component\HttpKernel\Kernel
     <body>Hello World !</body>
 </html>
 HTML
-);
+        );
     }
 }
-
 
 class TestEntity extends Model
 {

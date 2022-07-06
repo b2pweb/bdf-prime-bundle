@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Adapt the doctrine data collector to prime
+ * Adapt the doctrine data collector to prime.
  */
 class PrimeDataCollector extends DoctrineDataCollector
 {

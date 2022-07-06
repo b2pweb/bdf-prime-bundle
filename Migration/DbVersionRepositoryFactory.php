@@ -6,7 +6,7 @@ use Bdf\Prime\Migration\Version\DbVersionRepository;
 use Bdf\Prime\ServiceLocator;
 
 /**
- * Create an instance of DbVersionRepository
+ * Create an instance of DbVersionRepository.
  */
 class DbVersionRepositoryFactory
 {
@@ -17,8 +17,6 @@ class DbVersionRepositoryFactory
 
     /**
      * PrimeFactory constructor.
-     *
-     * @param ServiceLocator $prime
      */
     public function __construct(ServiceLocator $prime)
     {
@@ -26,12 +24,7 @@ class DbVersionRepositoryFactory
     }
 
     /**
-     * Create the repository instance
-     *
-     * @param string $tableName
-     * @param string|null $connection
-     *
-     * @return DbVersionRepository
+     * Create the repository instance.
      */
     public function create(string $tableName, string $connection = null): DbVersionRepository
     {

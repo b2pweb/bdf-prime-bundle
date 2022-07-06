@@ -11,7 +11,6 @@ use Bdf\Prime\Connection\Factory\ShardingConnectionFactory;
 use Bdf\Prime\Mapper\MapperFactory;
 use Bdf\Prime\MongoDB\Collection\MongoCollectionLocator;
 use Bdf\Prime\MongoDB\Document\DocumentMapperInterface;
-use Bdf\Prime\MongoDB\Schema\CollectionStructureUpgrader;
 use Bdf\Prime\MongoDB\Schema\CollectionStructureUpgraderResolver;
 use Bdf\Prime\Schema\RepositoryUpgraderResolver;
 use Bdf\Prime\Schema\StructureUpgraderResolverAggregate;
@@ -30,7 +29,7 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
- * PrimeExtension
+ * PrimeExtension.
  */
 class PrimeExtension extends Extension
 {
@@ -42,7 +41,7 @@ class PrimeExtension extends Extension
         $configuration = $this->getConfiguration($configs, $container);
         $config = $this->processConfiguration($configuration, $configs);
 
-        $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
+        $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('prime.yaml');
         $loader->load('collector.yaml');
 
@@ -66,10 +65,6 @@ class PrimeExtension extends Extension
         $container->setParameter('prime.locatorizable', $config['activerecord']);
     }
 
-    /**
-     * @param array $config
-     * @param ContainerBuilder $container
-     */
     public function configureConnection(array $config, ContainerBuilder $container)
     {
         foreach ($config['connections'] as $name => &$options) {
@@ -95,11 +90,6 @@ class PrimeExtension extends Extension
         $registry->replaceArgument(0, $config['connections']);
     }
 
-    /**
-     * @param string $option
-     * @param array $options
-     * @return bool
-     */
     private function hasConnectionOption(string $option, array $options): bool
     {
         if (isset($options[$option])) {
@@ -114,10 +104,6 @@ class PrimeExtension extends Extension
         return true;
     }
 
-    /**
-     * @param array $config
-     * @param ContainerBuilder $container
-     */
     public function configureSerializer(array $config, ContainerBuilder $container)
     {
         if (!isset($config['serializer'])) {
@@ -128,10 +114,6 @@ class PrimeExtension extends Extension
         $prime->addMethodCall('setSerializer', [new Reference($config['serializer'])]);
     }
 
-    /**
-     * @param array $config
-     * @param ContainerBuilder $container
-     */
     public function configureMapperCache(array $config, ContainerBuilder $container)
     {
         $definition = $container->getDefinition(MapperFactory::class);
@@ -139,7 +121,7 @@ class PrimeExtension extends Extension
         if (isset($config['cache']['query'])) {
             $ref = $this->createResultCacheReference('prime.cache.query', $config['cache']['query'], $container);
 
-            if ($ref !== null) {
+            if (null !== $ref) {
                 $definition->replaceArgument(2, $ref);
             }
         }
@@ -147,17 +129,13 @@ class PrimeExtension extends Extension
         if (isset($config['cache']['metadata'])) {
             $ref = $this->createCacheReference('prime.cache.metadata', $config['cache']['metadata'], $container);
 
-            if ($ref !== null) {
+            if (null !== $ref) {
                 $definition->replaceArgument(1, $ref);
             }
         }
     }
 
     /**
-     * @param FileLoader $loader
-     * @param ContainerBuilder $container
-     * @param array $config
-     * @return void
      * @throws \Exception
      */
     public function configureMongo(FileLoader $loader, ContainerBuilder $container, array $config): void
@@ -173,7 +151,7 @@ class PrimeExtension extends Extension
             $definition = $container->findDefinition('prime_mongodb_serializer');
             $ref = $this->createCacheReference('prime.cache.metadata', $config['cache']['metadata'], $container);
 
-            if ($ref !== null) {
+            if (null !== $ref) {
                 $definition->replaceArgument(0, $ref);
             }
         }
@@ -183,10 +161,6 @@ class PrimeExtension extends Extension
         ;
     }
 
-    /**
-     * @param array $config
-     * @param ContainerBuilder $container
-     */
     private function configureUpgrader(array $config, ContainerBuilder $container)
     {
         $container->register(RepositoryUpgraderResolver::class)
@@ -207,12 +181,6 @@ class PrimeExtension extends Extension
         ;
     }
 
-    /**
-     * @param array $globalConfig
-     * @param array $config
-     *
-     * @return array
-     */
     public function mergeConfiguration(array $globalConfig, array $config): array
     {
         return [
@@ -224,11 +192,7 @@ class PrimeExtension extends Extension
     }
 
     /**
-     * Create and declare the configuration definition of the connection
-     *
-     * @param string $name
-     * @param array $config
-     * @param ContainerBuilder $container
+     * Create and declare the configuration definition of the connection.
      */
     public function createConfiguration(string $name, array $config, ContainerBuilder $container): void
     {
@@ -255,7 +219,7 @@ class PrimeExtension extends Extension
         if ($config['profiling']) {
             $profilingLogger = new Reference('prime.logger.profiling');
 
-            if ($logger !== null) {
+            if (null !== $logger) {
                 $chainLogger = $container->findDefinition('prime.logger.chain');
                 $chainLogger->replaceArgument(0, [$logger, $profilingLogger]);
 
@@ -271,10 +235,7 @@ class PrimeExtension extends Extension
     }
 
     /**
-     * @param array $config
-     * @param ContainerBuilder $container
-     *
-     * @return null|Reference
+     * @return Reference|null
      */
     private function createCacheReference(string $namespace, array $config, ContainerBuilder $container)
     {
@@ -295,12 +256,9 @@ class PrimeExtension extends Extension
     }
 
     /**
-     * Create the cache result service
+     * Create the cache result service.
      *
-     * @param array $config
-     * @param ContainerBuilder $container
-     *
-     * @return null|Reference
+     * @return Reference|null
      */
     private function createResultCacheReference(string $namespace, array $config, ContainerBuilder $container)
     {
@@ -325,11 +283,7 @@ class PrimeExtension extends Extension
     }
 
     /**
-     * Rearrange the key name of the configuration
-     *
-     * @param array $options
-     *
-     * @return array
+     * Rearrange the key name of the configuration.
      */
     private function cleanConnectionOptions(array $options): array
     {
@@ -364,7 +318,6 @@ class PrimeExtension extends Extension
         if (!empty($options['read']) && !empty($options['shards'])) {
             throw new InvalidArgumentException('Sharding and master-slave connection cannot be used together');
         }
-
 
         $parameters = ['read', 'shards', 'driverOptions', 'defaultTableOptions'];
 
