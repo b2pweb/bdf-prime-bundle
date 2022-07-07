@@ -7,7 +7,7 @@ use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
- * Ignore all annotations from the bdf serializer and used by prime
+ * Ignore all annotations from the bdf serializer and used by prime.
  */
 class IgnorePrimeAnnotationsPass implements CompilerPassInterface
 {

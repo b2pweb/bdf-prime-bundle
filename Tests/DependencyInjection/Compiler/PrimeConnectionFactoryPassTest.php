@@ -8,15 +8,9 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
-/**
- *
- */
 class PrimeConnectionFactoryPassTest extends TestCase
 {
-    /**
-     *
-     */
-    public function test_throw_exception_when_no_loaders()
+    public function testThrowExceptionWhenNoLoaders()
     {
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('You must tag at least one service as "bdf_prime.connection_factory" to use the "'.ChainFactory::class.'" service');
@@ -27,10 +21,7 @@ class PrimeConnectionFactoryPassTest extends TestCase
         $serializerPass->process($container);
     }
 
-    /**
-     *
-     */
-    public function test_services_are_ordered_according_to_priority()
+    public function testServicesAreOrderedAccordingToPriority()
     {
         $container = new ContainerBuilder();
 

@@ -7,7 +7,7 @@ use Bdf\Prime\Test\TestPack;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 /**
- * TestingPrimeBundle
+ * TestingPrimeBundle.
  *
  * @author Seb
  */

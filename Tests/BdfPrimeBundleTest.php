@@ -21,7 +21,6 @@ use Bdf\PrimeBundle\Collector\PrimeDataCollector;
 use Bdf\PrimeBundle\DependencyInjection\Compiler\PrimeConnectionFactoryPass;
 use Bdf\PrimeBundle\PrimeBundle;
 use Doctrine\Common\Cache\Psr6\DoctrineProvider;
-use Doctrine\DBAL\Driver;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
@@ -33,11 +32,11 @@ use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Routing\RouteCollectionBuilder;
 
 /**
- * BdfSerializerBundleTest
+ * BdfSerializerBundleTest.
  */
 class BdfPrimeBundleTest extends TestCase
 {
-    public function test_default_config()
+    public function testDefaultConfig()
     {
         $builder = new ContainerBuilder();
         $bundle = new PrimeBundle();
@@ -48,17 +47,14 @@ class BdfPrimeBundleTest extends TestCase
 
         foreach ($compilerPasses as $pass) {
             if ($pass instanceof PrimeConnectionFactoryPass) {
-                $found++;
+                ++$found;
             }
         }
 
         $this->assertSame(1, $found);
     }
 
-    /**
-     *
-     */
-    public function test_kernel()
+    public function testKernel()
     {
         $kernel = new \TestKernel('dev', true);
         $kernel->boot();
@@ -72,7 +68,7 @@ class BdfPrimeBundleTest extends TestCase
     /**
      * @return void
      */
-    public function test_structure_upgrader()
+    public function testStructureUpgrader()
     {
         if (!interface_exists(StructureUpgraderResolverInterface::class)) {
             $this->markTestSkipped('StructureUpgraderResolverInterface not present');
@@ -102,10 +98,7 @@ class BdfPrimeBundleTest extends TestCase
         $this->assertEquals($upgrader, $kernel->getContainer()->get(StructureUpgraderResolverAggregate::class)->resolveByMapperClass(\TestEntityMapper::class));
     }
 
-    /**
-     *
-     */
-    public function test_collector()
+    public function testCollector()
     {
         $kernel = new \TestKernel('dev', true);
         $kernel->boot();
@@ -121,10 +114,7 @@ class BdfPrimeBundleTest extends TestCase
         $this->assertContains('SELECT * FROM test_ WHERE id = ? LIMIT 1', $queries);
     }
 
-    /**
-     *
-     */
-    public function test_functional()
+    public function testFunctional()
     {
         $kernel = new \TestKernel('dev', true);
         $kernel->boot();
@@ -138,10 +128,7 @@ class BdfPrimeBundleTest extends TestCase
         $this->assertEquals($entity, \TestEntity::where('name', 'foo')->first());
     }
 
-    /**
-     *
-     */
-    public function test_sharding_connection()
+    public function testShardingConnection()
     {
         $kernel = new class('test', true) extends Kernel {
             use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
@@ -159,7 +146,9 @@ class BdfPrimeBundleTest extends TestCase
                 $loader->import(__DIR__.'/Fixtures/sharding.yaml');
             }
 
-            protected function configureRoutes(RouteCollectionBuilder $routes) { }
+            protected function configureRoutes(RouteCollectionBuilder $routes)
+            {
+            }
         };
 
         $kernel->boot();
@@ -174,10 +163,7 @@ class BdfPrimeBundleTest extends TestCase
         $this->assertSame($prime->connection('test')->getConfiguration(), $connection->getConfiguration());
     }
 
-    /**
-     *
-     */
-    public function test_array_cache()
+    public function testArrayCache()
     {
         $kernel = new class('test', true) extends Kernel {
             use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
@@ -195,7 +181,9 @@ class BdfPrimeBundleTest extends TestCase
                 $loader->import(__DIR__.'/Fixtures/array_cache.yaml');
             }
 
-            protected function configureRoutes($routes) { }
+            protected function configureRoutes($routes)
+            {
+            }
         };
 
         $kernel->boot();
@@ -205,10 +193,7 @@ class BdfPrimeBundleTest extends TestCase
         $this->assertEquals(new ArrayCache(), $prime->mappers()->getResultCache());
     }
 
-    /**
-     *
-     */
-    public function test_pool_cache()
+    public function testPoolCache()
     {
         $kernel = new class('test', true) extends Kernel {
             use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
@@ -228,7 +213,9 @@ class BdfPrimeBundleTest extends TestCase
                 $loader->import(__DIR__.'/Fixtures/pool_cache.yaml');
             }
 
-            protected function configureRoutes($routes) { }
+            protected function configureRoutes($routes)
+            {
+            }
         };
 
         $kernel->boot();
@@ -238,10 +225,7 @@ class BdfPrimeBundleTest extends TestCase
         $this->assertEquals(new DoctrineCacheAdapter(DoctrineProvider::wrap(new FilesystemAdapter())), $prime->mappers()->getResultCache());
     }
 
-    /**
-     *
-     */
-    public function test_global_config()
+    public function testGlobalConfig()
     {
         $kernel = new class('test', true) extends Kernel {
             use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
@@ -259,7 +243,9 @@ class BdfPrimeBundleTest extends TestCase
                 $loader->import(__DIR__.'/Fixtures/config.yaml');
             }
 
-            protected function configureRoutes($routes) { }
+            protected function configureRoutes($routes)
+            {
+            }
         };
 
         $kernel->boot();
@@ -276,10 +262,7 @@ class BdfPrimeBundleTest extends TestCase
         $this->assertInstanceOf(ArrayType::class, $connection->getConfiguration()->getTypes()->get('array'));
     }
 
-    /**
-     *
-     */
-    public function test_connection_config()
+    public function testConnectionConfig()
     {
         $kernel = new class('test', true) extends Kernel {
             use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
@@ -297,7 +280,9 @@ class BdfPrimeBundleTest extends TestCase
                 $loader->import(__DIR__.'/Fixtures/config.yaml');
             }
 
-            protected function configureRoutes($routes) { }
+            protected function configureRoutes($routes)
+            {
+            }
         };
 
         $kernel->boot();

@@ -7,15 +7,9 @@ use Bdf\PrimeBundle\Connection\ConfigurationResolver;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 
-/**
- *
- */
 class ConfigurationResolverTest extends TestCase
 {
-    /**
-     *
-     */
-    public function test_unknwon_key()
+    public function testUnknwonKey()
     {
         $container = $this->createMock(ContainerInterface::class);
 
@@ -24,10 +18,7 @@ class ConfigurationResolverTest extends TestCase
         $this->assertNull($resolver->getConfiguration('unknown'));
     }
 
-    /**
-     *
-     */
-    public function test_get_config()
+    public function testGetConfig()
     {
         $configuration = new Configuration();
         $container = $this->createMock(ContainerInterface::class);

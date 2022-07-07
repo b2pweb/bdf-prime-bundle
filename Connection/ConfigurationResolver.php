@@ -24,9 +24,6 @@ class ConfigurationResolver implements ConfigurationResolverInterface
 
     /**
      * ConfigurationResolver constructor.
-     *
-     * @param ContainerInterface $container
-     * @param string $id
      */
     public function __construct(ContainerInterface $container, string $id = 'prime.%s_connection.configuration')
     {
@@ -42,7 +39,6 @@ class ConfigurationResolver implements ConfigurationResolverInterface
         try {
             return $this->container->get(sprintf($this->id, $connectionName));
         } catch (ContainerExceptionInterface $exception) {
-
         }
 
         return null;
