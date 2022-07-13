@@ -26,6 +26,7 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Config\Loader\LoaderInterface;
+use Symfony\Component\Console\Command\LazyCommand;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Kernel;
@@ -82,6 +83,11 @@ class BdfPrimeBundleTest extends TestCase
 
         $console = new Application($kernel);
         $command = $console->get(UpgraderCommand::getDefaultName());
+
+        if ($command instanceof LazyCommand) {
+            $command = $command->getCommand();
+        }
+
         $r = new \ReflectionProperty($command, 'resolver');
         $r->setAccessible(true);
 

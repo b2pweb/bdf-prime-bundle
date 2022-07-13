@@ -16,6 +16,7 @@ use Bdf\Prime\Schema\RepositoryUpgraderResolver;
 use Bdf\Prime\Schema\StructureUpgraderResolverAggregate;
 use Bdf\Prime\Schema\StructureUpgraderResolverInterface;
 use Bdf\Prime\ServiceLocator;
+use Bdf\Prime\Shell\PrimeShellCommand;
 use Bdf\Prime\Types\TypesRegistryInterface;
 use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Symfony\Component\Cache\Psr16Cache;
@@ -55,6 +56,10 @@ class PrimeExtension extends Extension
 
         if (class_exists(MongoCollectionLocator::class)) {
             $this->configureMongo($loader, $container, $config);
+        }
+
+        if (class_exists(PrimeShellCommand::class)) {
+            $loader->load('prime_shell.yaml');
         }
 
         $container->setParameter('prime.default_connection', $config['default_connection']);

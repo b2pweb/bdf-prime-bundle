@@ -1,0 +1,5 @@
+services:
+  Bdf\Prime\Shell\PrimeShellCommand:
+    class: Bdf\Prime\Shell\PrimeShellCommand
+    arguments: ['@prime']
+    tags: ['console.command']
