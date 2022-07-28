@@ -8,6 +8,7 @@ use Bdf\Prime\Cache\ArrayCache;
 use Bdf\Prime\Cache\DoctrineCacheAdapter;
 use Bdf\Prime\Connection\SimpleConnection;
 use Bdf\Prime\Console\UpgraderCommand;
+use Bdf\Prime\Locatorizable;
 use Bdf\Prime\Migration\MigrationManager;
 use Bdf\Prime\Schema\RepositoryUpgrader;
 use Bdf\Prime\Schema\StructureUpgraderResolverAggregate;
@@ -303,6 +304,34 @@ class BdfPrimeBundleTest extends TestCase
         $this->assertInstanceOf(BarType::class, $connection->getConfiguration()->getTypes()->get('foo'));
         $this->assertInstanceOf(BarType::class, $connection->getConfiguration()->getTypes()->get('bar'));
         $this->assertInstanceOf(ArrayType::class, $connection->getConfiguration()->getTypes()->get('array'));
+    }
+
+    /**
+     * Check that destroying entity with prime unconfigured will works.
+     */
+    public function testEntityDestroyAfterShutdown()
+    {
+        $this->expectNotToPerformAssertions();
+
+        $kernel = new \TestKernel('test', true);
+        $kernel->boot();
+        \TestEntity::repository()->schema()->migrate();
+        $entity = new \TestEntity(['name' => 'foo']);
+        $entity->insert();
+        $kernel->shutdown();
+        $kernel->boot();
+        $kernel->shutdown();
+
+        unset($entity);
+    }
+
+    public function testShutdownShouldDisableActiveRecord()
+    {
+        $kernel = new \TestKernel('test', true);
+        $kernel->boot();
+        $this->assertTrue(Locatorizable::isActiveRecordEnabled());
+        $kernel->shutdown();
+        $this->assertFalse(Locatorizable::isActiveRecordEnabled());
     }
 }
 
