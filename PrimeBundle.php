@@ -50,19 +50,26 @@ class PrimeBundle extends Bundle
      */
     public function shutdown()
     {
-        if (!$this->container->initialized('prime')) {
-            return;
+        if ($this->container->initialized('prime')) {
+            /** @var ServiceLocator $prime */
+            $prime = $this->container->get('prime');
+
+            // Clear circle references
+            $prime->clearRepositories();
+
+            // Close all loaded connections
+            foreach ($prime->connections() as $connection) {
+                $connection->close();
+            }
         }
 
-        /** @var ServiceLocator $prime */
-        $prime = $this->container->get('prime');
+        // Always unconfigure locator, because it's configured even if prime is not initialized
+        if ($this->container->getParameter('prime.locatorizable')) {
+            Locatorizable::configure(null);
 
-        // Clear circle references
-        $prime->clearRepositories();
-
-        // Close all loaded connections
-        foreach ($prime->connections() as $connection) {
-            $connection->close();
+            if (class_exists(Mongo::class)) {
+                Mongo::configure(null);
+            }
         }
     }
 }
