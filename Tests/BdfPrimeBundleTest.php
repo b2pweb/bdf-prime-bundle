@@ -16,7 +16,6 @@ use Bdf\Prime\Schema\StructureUpgraderResolverInterface;
 use Bdf\Prime\ServiceLocator;
 use Bdf\Prime\Sharding\ShardingConnection;
 use Bdf\Prime\Sharding\ShardingQuery;
-use Bdf\Prime\TestEntity;
 use Bdf\Prime\Types\ArrayType;
 use Bdf\Prime\Types\TypeInterface;
 use Bdf\PrimeBundle\Collector\PrimeDataCollector;
@@ -308,7 +307,7 @@ class BdfPrimeBundleTest extends TestCase
     }
 
     /**
-     * Check that destroying entity with prime unconfigured will works
+     * Check that destroying entity with prime unconfigured will works.
      */
     public function testEntityDestroyAfterShutdown()
     {
