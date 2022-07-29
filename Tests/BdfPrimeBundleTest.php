@@ -6,10 +6,12 @@ require_once __DIR__.'/TestKernel.php';
 
 use Bdf\Prime\Cache\ArrayCache;
 use Bdf\Prime\Cache\DoctrineCacheAdapter;
+use Bdf\Prime\Configuration;
 use Bdf\Prime\Connection\SimpleConnection;
 use Bdf\Prime\Console\UpgraderCommand;
 use Bdf\Prime\Locatorizable;
 use Bdf\Prime\Migration\MigrationManager;
+use Bdf\Prime\Platform\Sql\Types\SqlStringType;
 use Bdf\Prime\Schema\RepositoryUpgrader;
 use Bdf\Prime\Schema\StructureUpgraderResolverAggregate;
 use Bdf\Prime\Schema\StructureUpgraderResolverInterface;
@@ -333,6 +335,71 @@ class BdfPrimeBundleTest extends TestCase
         $kernel->shutdown();
         $this->assertFalse(Locatorizable::isActiveRecordEnabled());
     }
+
+    public function testCustomPlatformTypesNotSupported()
+    {
+        $this->expectExceptionMessage('Define platform types is only supported by bdf-prime version >= 2.1');
+
+        if (method_exists(Configuration::class, 'addPlatformType')) {
+            $this->markTestSkipped();
+        }
+
+        $kernel = new class('test', true) extends Kernel {
+            use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+
+            public function registerBundles(): iterable
+            {
+                return [
+                    new FrameworkBundle(),
+                    new PrimeBundle(),
+                ];
+            }
+
+            protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)
+            {
+                $loader->import(__DIR__.'/Fixtures/config_with_platform_types.yaml');
+            }
+
+            protected function configureRoutes($routes)
+            {
+            }
+        };
+
+        $kernel->boot();
+    }
+
+    public function testCustomPlatformTypes()
+    {
+        if (!method_exists(Configuration::class, 'addPlatformType')) {
+            $this->markTestSkipped();
+        }
+
+        $kernel = new class('test', true) extends Kernel {
+            use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+
+            public function registerBundles(): iterable
+            {
+                return [
+                    new FrameworkBundle(),
+                    new PrimeBundle(),
+                ];
+            }
+
+            protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)
+            {
+                $loader->import(__DIR__.'/Fixtures/config_with_platform_types.yaml');
+            }
+
+            protected function configureRoutes($routes)
+            {
+            }
+        };
+
+        $kernel->boot();
+
+        $this->assertInstanceOf(OverriddenString::class, $kernel->getContainer()->get('prime')->connection('test')->platform()->types()->resolve(''));
+        $this->assertSame('foo', $kernel->getContainer()->get('prime')->connection('test')->toDatabase(''));
+    }
 }
 
 class FooType implements TypeInterface
@@ -377,5 +444,13 @@ class BarType implements TypeInterface
     public function phpType(): string
     {
         // TODO: Implement phpType() method.
+    }
+}
+
+class OverriddenString extends SqlStringType
+{
+    public function toDatabase($value)
+    {
+        return 'foo';
     }
 }

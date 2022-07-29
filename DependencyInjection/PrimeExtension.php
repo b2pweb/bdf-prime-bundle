@@ -193,6 +193,7 @@ class PrimeExtension extends Extension
             'auto_commit' => $config['auto_commit'] ?? $globalConfig['auto_commit'],
             'logging' => $config['logging'] ?? $globalConfig['logging'],
             'profiling' => $config['profiling'] ?? $globalConfig['profiling'],
+            'platformTypes' => $config['platformTypes'] ?? [],
         ];
     }
 
@@ -236,6 +237,10 @@ class PrimeExtension extends Extension
 
         if ($logger) {
             $configuration->addMethodCall('setSQLLogger', [$logger]);
+        }
+
+        foreach ($config['platformTypes'] as $type => $info) {
+            $configuration->addMethodCall('addPlatformType', [$info['class'], is_int($type) ? null : $type]);
         }
     }
 
