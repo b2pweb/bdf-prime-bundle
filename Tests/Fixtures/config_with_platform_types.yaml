@@ -1,0 +1,19 @@
+prime:
+  activerecord: true
+  logging: true
+  profiling: true
+  auto_commit: true
+  default_connection: 'test'
+  connections:
+    test:
+      url: 'sqlite::memory:'
+      logging: false
+      profiling: false
+      auto_commit: false
+      platformTypes:
+        - { name: string, class: \Bdf\PrimeBundle\Tests\OverriddenString }
+    test2:
+      url: 'sqlite::memory:'
+  migration:
+    connection: 'test'
+    path: '%kernel.project_dir%/src/Migration'
