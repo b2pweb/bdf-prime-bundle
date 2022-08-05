@@ -1,3 +1,11 @@
+v1.6.0
+------
+
+ * Feat: Declare or override platform types (#FRAM-61) (#8)
+ * Feat: Unconfigure prime on shutdown (#FRAM-59) (#7)
+ * feat: Declare prime shell command (#FRAM-54) (#6)
+ * Fix Update codestyle and add phpcs fixer on build (#5)
+
 v1.5.0
 ------
 
