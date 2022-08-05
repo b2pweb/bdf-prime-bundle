@@ -2,6 +2,7 @@
 
 namespace Bdf\PrimeBundle\DependencyInjection;
 
+use Bdf\Prime\Configuration as PrimeConfiguration;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
@@ -109,6 +110,7 @@ class Configuration implements ConfigurationInterface
                     ->useAttributeAsKey('name')
                     ->scalarPrototype()->end()
                 ->end()
+                ->append($this->getPlatformTypesNode())
             ->end();
 
         $slaveNode = $connectionNode->children()->arrayNode('read');
@@ -259,6 +261,32 @@ class Configuration implements ConfigurationInterface
             ->children()
                 ->scalarNode('class')->isRequired()->end()
             ->end()
+        ;
+
+        return $root;
+    }
+
+    /**
+     * @return NodeDefinition
+     */
+    private function getPlatformTypesNode()
+    {
+        $root = (new TreeBuilder('platformTypes'))->getRootNode();
+        $root
+            ->useAttributeAsKey('name')
+            ->arrayPrototype()
+            ->beforeNormalization()
+            ->ifString()
+            ->then(static function ($v) {
+                return ['class' => $v];
+            })
+            ->end()
+            ->children()
+                ->scalarNode('class')->isRequired()->end()
+            ->end()
+            ->beforeNormalization()
+            ->ifTrue(function ($value) { return !empty($value) && !method_exists(PrimeConfiguration::class, 'addPlatformType'); })
+            ->thenInvalid('Define platform types is only supported by bdf-prime version >= 2.1')
         ;
 
         return $root;
