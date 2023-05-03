@@ -2,10 +2,10 @@
 
 namespace Bdf\PrimeBundle\Tests;
 
+use Bdf\PrimeBundle\Tests\Fixtures\TestEntity;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Routing\RouteCollectionBuilder;
-use Bdf\PrimeBundle\Tests\Fixtures\TestEntity;
 
 class TestKernel extends \Symfony\Component\HttpKernel\Kernel
 {

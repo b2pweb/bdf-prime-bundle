@@ -195,7 +195,7 @@ class PrimeExtension extends Extension
     }
 
     /**
-     * Configure new classes and features of Prime 2.1
+     * Configure new classes and features of Prime 2.1.
      */
     private function configurePrime21(ContainerBuilder $container): void
     {
@@ -208,7 +208,7 @@ class PrimeExtension extends Extension
 
         // Configure UpgraderCommand with migration manager to allows generation of migration files
         $upgraderCommandConstructor = new \ReflectionMethod(UpgraderCommand::class, '__construct');
-        if ($upgraderCommandConstructor->getNumberOfParameters() >= 2 && $upgraderCommandConstructor->getParameters()[1]->getType()->getName() === MigrationManager::class) {
+        if ($upgraderCommandConstructor->getNumberOfParameters() >= 2 && MigrationManager::class === $upgraderCommandConstructor->getParameters()[1]->getType()->getName()) {
             $container->findDefinition('prime.upgrade_command')
                 ->addArgument(new Reference(MigrationManager::class))
             ;
@@ -356,7 +356,7 @@ class PrimeExtension extends Extension
             unset($options['platform_service']);
         }
 
-//        unset($options['mapping_types']);
+        //        unset($options['mapping_types']);
 
         if (isset($options['shard_choser'])) {
             $options['shard_choser'] = new Reference($options['shard_choser']);
