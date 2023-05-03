@@ -18,3 +18,11 @@ prime:
 services:
   logger:
     class: 'Psr\Log\NullLogger'
+
+  Bdf\PrimeBundle\Tests\Fixtures\:
+    autowire: true
+    autoconfigure: true
+    resource: './Fixtures'
+
+  Bdf\PrimeBundle\Tests\Fixtures\A:
+    arguments: ['bar']

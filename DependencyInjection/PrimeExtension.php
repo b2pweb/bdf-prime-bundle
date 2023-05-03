@@ -8,7 +8,13 @@ use Bdf\Prime\Connection\ConnectionRegistry;
 use Bdf\Prime\Connection\Factory\ConnectionFactory;
 use Bdf\Prime\Connection\Factory\MasterSlaveConnectionFactory;
 use Bdf\Prime\Connection\Factory\ShardingConnectionFactory;
+use Bdf\Prime\Console\CriteriaCommand;
+use Bdf\Prime\Console\UpgraderCommand;
+use Bdf\Prime\Mapper\ContainerMapperFactory;
+use Bdf\Prime\Mapper\Mapper;
 use Bdf\Prime\Mapper\MapperFactory;
+use Bdf\Prime\Mapper\MapperFactoryInterface;
+use Bdf\Prime\Migration\MigrationManager;
 use Bdf\Prime\MongoDB\Collection\MongoCollectionLocator;
 use Bdf\Prime\MongoDB\Document\DocumentMapperInterface;
 use Bdf\Prime\MongoDB\Schema\CollectionStructureUpgraderResolver;
@@ -68,6 +74,8 @@ class PrimeExtension extends Extension
         $container->setParameter('prime.migration.path', $config['migration']['path']);
         $container->setParameter('prime.hydrators', $config['hydrators']);
         $container->setParameter('prime.locatorizable', $config['activerecord']);
+
+        $this->configurePrime21($container);
     }
 
     public function configureConnection(array $config, ContainerBuilder $container)
@@ -184,6 +192,52 @@ class PrimeExtension extends Extension
         $container->findDefinition('prime.upgrade_command')
             ->replaceArgument(0, new Reference(StructureUpgraderResolverInterface::class))
         ;
+    }
+
+    /**
+     * Configure new classes and features of Prime 2.1
+     */
+    private function configurePrime21(ContainerBuilder $container): void
+    {
+        if (class_exists(CriteriaCommand::class)) {
+            $container->register(CriteriaCommand::class, CriteriaCommand::class)
+                ->addArgument(new Reference(ServiceLocator::class))
+                ->addTag('console.command')
+            ;
+        }
+
+        // Configure UpgraderCommand with migration manager to allows generation of migration files
+        $upgraderCommandConstructor = new \ReflectionMethod(UpgraderCommand::class, '__construct');
+        if ($upgraderCommandConstructor->getNumberOfParameters() >= 2 && $upgraderCommandConstructor->getParameters()[1]->getType()->getName() === MigrationManager::class) {
+            $container->findDefinition('prime.upgrade_command')
+                ->addArgument(new Reference(MigrationManager::class))
+            ;
+        }
+
+        // Use the container mapper factory instead of the legacy one
+        if (class_exists(ContainerMapperFactory::class)) {
+            $baseArguments = $container->findDefinition(MapperFactory::class)->getArguments();
+
+            $container->register(ContainerMapperFactory::class)
+                ->addArgument(new Reference('service_container'))
+                ->addArgument($baseArguments[0])
+                ->addArgument($baseArguments[1])
+                ->addArgument($baseArguments[2])
+            ;
+
+            $container->setAlias(MapperFactoryInterface::class, ContainerMapperFactory::class);
+            $container->findDefinition('prime')
+                ->replaceArgument(1, new Reference(MapperFactoryInterface::class))
+            ;
+
+            // Mappers must be public to be accessible by the factory
+            $container->registerForAutoconfiguration(Mapper::class)
+                ->setShared(false)
+                ->setAutowired(true)
+                ->setPublic(true)
+                ->addTag('prime.mapper')
+            ;
+        }
     }
 
     public function mergeConfiguration(array $globalConfig, array $config): array

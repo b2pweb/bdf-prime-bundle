@@ -8,8 +8,10 @@ use Bdf\Prime\Cache\ArrayCache;
 use Bdf\Prime\Cache\DoctrineCacheAdapter;
 use Bdf\Prime\Configuration;
 use Bdf\Prime\Connection\SimpleConnection;
+use Bdf\Prime\Console\CriteriaCommand;
 use Bdf\Prime\Console\UpgraderCommand;
 use Bdf\Prime\Locatorizable;
+use Bdf\Prime\Mapper\ContainerMapperFactory;
 use Bdf\Prime\Migration\MigrationManager;
 use Bdf\Prime\Platform\Sql\Types\SqlStringType;
 use Bdf\Prime\Schema\RepositoryUpgrader;
@@ -23,12 +25,17 @@ use Bdf\Prime\Types\TypeInterface;
 use Bdf\PrimeBundle\Collector\PrimeDataCollector;
 use Bdf\PrimeBundle\DependencyInjection\Compiler\PrimeConnectionFactoryPass;
 use Bdf\PrimeBundle\PrimeBundle;
+use Bdf\PrimeBundle\Tests\Fixtures\A;
+use Bdf\PrimeBundle\Tests\Fixtures\TestEntity;
+use Bdf\PrimeBundle\Tests\Fixtures\TestEntityMapper;
+use Bdf\PrimeBundle\Tests\Fixtures\WithInjection;
 use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Config\Loader\LoaderInterface;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Command\LazyCommand;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpFoundation\Request;
@@ -60,13 +67,33 @@ class BdfPrimeBundleTest extends TestCase
 
     public function testKernel()
     {
-        $kernel = new \TestKernel('dev', true);
+        $kernel = new TestKernel('dev', true);
         $kernel->boot();
 
         $this->assertInstanceOf(ServiceLocator::class, $kernel->getContainer()->get('prime'));
         $this->assertSame($kernel->getContainer()->get('prime'), $kernel->getContainer()->get(ServiceLocator::class));
         $this->assertInstanceOf(MigrationManager::class, $kernel->getContainer()->get(MigrationManager::class));
         $this->assertInstanceOf(SimpleConnection::class, $kernel->getContainer()->get(ServiceLocator::class)->connection('test'));
+    }
+
+    public function testConsole()
+    {
+        $kernel = new TestKernel('dev', true);
+        $kernel->boot();
+        $console = new Application($kernel);
+
+        $this->assertInstanceOf(UpgraderCommand::class, $this->getCommand($console, 'prime:upgrade'));
+
+        if (class_exists(CriteriaCommand::class)) {
+            $this->assertInstanceOf(CriteriaCommand::class, $this->getCommand($console, 'prime:criteria'));
+        }
+
+        $reflection = new \ReflectionClass(UpgraderCommand::class);
+        if ($reflection->hasProperty('migrationManager')) {
+            $prop = $reflection->getProperty('migrationManager');
+            $prop->setAccessible(true);
+            $this->assertSame($kernel->getContainer()->get(MigrationManager::class), $prop->getValue($this->getCommand($console, 'prime:upgrade')));
+        }
     }
 
     /**
@@ -78,18 +105,14 @@ class BdfPrimeBundleTest extends TestCase
             $this->markTestSkipped('StructureUpgraderResolverInterface not present');
         }
 
-        $kernel = new \TestKernel('dev', true);
+        $kernel = new TestKernel('dev', true);
         $kernel->boot();
 
         $this->assertInstanceOf(StructureUpgraderResolverAggregate::class, $kernel->getContainer()->get(StructureUpgraderResolverInterface::class));
         $this->assertInstanceOf(StructureUpgraderResolverAggregate::class, $kernel->getContainer()->get(StructureUpgraderResolverAggregate::class));
 
         $console = new Application($kernel);
-        $command = $console->get(UpgraderCommand::getDefaultName());
-
-        if ($command instanceof LazyCommand) {
-            $command = $command->getCommand();
-        }
+        $command = $this->getCommand($console, UpgraderCommand::getDefaultName());
 
         $r = new \ReflectionProperty($command, 'resolver');
         $r->setAccessible(true);
@@ -99,17 +122,17 @@ class BdfPrimeBundleTest extends TestCase
             $r->getValue($command)
         );
 
-        $upgrader = $kernel->getContainer()->get(StructureUpgraderResolverAggregate::class)->resolveByDomainClass(\TestEntity::class);
+        $upgrader = $kernel->getContainer()->get(StructureUpgraderResolverAggregate::class)->resolveByDomainClass(TestEntity::class);
 
         $this->assertInstanceOf(RepositoryUpgrader::class, $upgrader);
         $this->assertEquals('test_', $upgrader->table()->name());
 
-        $this->assertEquals($upgrader, $kernel->getContainer()->get(StructureUpgraderResolverAggregate::class)->resolveByMapperClass(\TestEntityMapper::class));
+        $this->assertEquals($upgrader, $kernel->getContainer()->get(StructureUpgraderResolverAggregate::class)->resolveByMapperClass(TestEntityMapper::class));
     }
 
     public function testCollector()
     {
-        $kernel = new \TestKernel('dev', true);
+        $kernel = new TestKernel('dev', true);
         $kernel->boot();
 
         $collector = $kernel->getContainer()->get(PrimeDataCollector::class);
@@ -125,16 +148,16 @@ class BdfPrimeBundleTest extends TestCase
 
     public function testFunctional()
     {
-        $kernel = new \TestKernel('dev', true);
+        $kernel = new TestKernel('dev', true);
         $kernel->boot();
 
-        \TestEntity::repository()->schema()->migrate();
+        TestEntity::repository()->schema()->migrate();
 
-        $entity = new \TestEntity(['name' => 'foo']);
+        $entity = new TestEntity(['name' => 'foo']);
         $entity->insert();
 
-        $this->assertEquals([$entity], \TestEntity::all());
-        $this->assertEquals($entity, \TestEntity::where('name', 'foo')->first());
+        $this->assertEquals([$entity], TestEntity::all());
+        $this->assertEquals($entity, TestEntity::where('name', 'foo')->first());
     }
 
     public function testShardingConnection()
@@ -315,10 +338,10 @@ class BdfPrimeBundleTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        $kernel = new \TestKernel('test', true);
+        $kernel = new TestKernel('test', true);
         $kernel->boot();
-        \TestEntity::repository()->schema()->migrate();
-        $entity = new \TestEntity(['name' => 'foo']);
+        TestEntity::repository()->schema()->migrate();
+        $entity = new TestEntity(['name' => 'foo']);
         $entity->insert();
         $kernel->shutdown();
         $kernel->boot();
@@ -329,7 +352,7 @@ class BdfPrimeBundleTest extends TestCase
 
     public function testShutdownShouldDisableActiveRecord()
     {
-        $kernel = new \TestKernel('test', true);
+        $kernel = new TestKernel('test', true);
         $kernel->boot();
         $this->assertTrue(Locatorizable::isActiveRecordEnabled());
         $kernel->shutdown();
@@ -399,6 +422,30 @@ class BdfPrimeBundleTest extends TestCase
 
         $this->assertInstanceOf(OverriddenString::class, $kernel->getContainer()->get('prime')->connection('test')->platform()->types()->resolve(''));
         $this->assertSame('foo', $kernel->getContainer()->get('prime')->connection('test')->toDatabase(''));
+    }
+
+    public function testMapperDependencyInjection()
+    {
+        if (!class_exists(ContainerMapperFactory::class)) {
+            $this->markTestSkipped('ContainerMapperFactory is not available');
+        }
+
+        $kernel = new TestKernel('dev', true);
+        $kernel->boot();
+
+        $this->assertInstanceOf(A::class, WithInjection::repository()->mapper()->a);
+        $this->assertSame('bar', WithInjection::repository()->mapper()->a->foo);
+    }
+
+    private function getCommand(Application $console, string $name): Command
+    {
+        $command = $console->get($name);
+
+        if ($command instanceof LazyCommand) {
+            return $command->getCommand();
+        }
+
+        return $command;
     }
 }
 
