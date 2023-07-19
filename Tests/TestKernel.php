@@ -1,7 +1,8 @@
 <?php
 
-use Bdf\Prime\Entity\Model;
-use Bdf\Prime\Mapper\Mapper;
+namespace Bdf\PrimeBundle\Tests;
+
+use Bdf\PrimeBundle\Tests\Fixtures\TestEntity;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Routing\RouteCollectionBuilder;
@@ -53,46 +54,5 @@ class TestKernel extends \Symfony\Component\HttpKernel\Kernel
 </html>
 HTML
         );
-    }
-}
-
-class TestEntity extends Model
-{
-    public $id;
-    public $name;
-    public $dateInsert;
-    public $parentId;
-    public $parent;
-
-    public function __construct(array $attributes = [])
-    {
-        $this->import($attributes);
-    }
-}
-
-class TestEntityMapper extends Mapper
-{
-    /**
-     * {@inheritdoc}
-     */
-    public function schema(): array
-    {
-        return [
-            'connection' => 'test',
-            'database' => 'test',
-            'table' => 'test_',
-        ];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function buildFields($builder): void
-    {
-        $builder
-            ->integer('id')->autoincrement()
-            ->string('name')
-            ->datetime('dateInsert')->alias('date_insert')->nillable()
-        ;
     }
 }
