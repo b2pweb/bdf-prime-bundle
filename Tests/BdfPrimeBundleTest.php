@@ -7,6 +7,7 @@ require_once __DIR__.'/TestKernel.php';
 use Bdf\Prime\Cache\ArrayCache;
 use Bdf\Prime\Cache\DoctrineCacheAdapter;
 use Bdf\Prime\Configuration;
+use Bdf\Prime\Connection\Middleware\LoggerMiddleware;
 use Bdf\Prime\Connection\SimpleConnection;
 use Bdf\Prime\Console\CriteriaCommand;
 use Bdf\Prime\Console\UpgraderCommand;
@@ -26,10 +27,12 @@ use Bdf\PrimeBundle\Collector\PrimeDataCollector;
 use Bdf\PrimeBundle\DependencyInjection\Compiler\PrimeConnectionFactoryPass;
 use Bdf\PrimeBundle\PrimeBundle;
 use Bdf\PrimeBundle\Tests\Fixtures\A;
+use Bdf\PrimeBundle\Tests\Fixtures\DummyMiddleware;
 use Bdf\PrimeBundle\Tests\Fixtures\TestEntity;
 use Bdf\PrimeBundle\Tests\Fixtures\TestEntityMapper;
 use Bdf\PrimeBundle\Tests\Fixtures\WithInjection;
 use Doctrine\Common\Cache\Psr6\DoctrineProvider;
+use Doctrine\DBAL\Driver\Middleware;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
@@ -192,7 +195,14 @@ class BdfPrimeBundleTest extends TestCase
 
         /** @var SimpleConnection $connection */
         $connection = $prime->connection('test.shard1');
-        $this->assertSame($prime->connection('test')->getConfiguration(), $connection->getConfiguration());
+
+        $expectedConfig = $prime->connection('test')->getConfiguration();
+
+        if (method_exists($expectedConfig, 'withName')) {
+            $expectedConfig = $expectedConfig->withName('test.shard1');
+        }
+
+        $this->assertEquals($expectedConfig, $connection->getConfiguration());
     }
 
     public function testArrayCache()
@@ -292,6 +302,62 @@ class BdfPrimeBundleTest extends TestCase
         $this->assertInstanceOf(FooType::class, $connection->getConfiguration()->getTypes()->get('foo'));
         $this->assertInstanceOf(BarType::class, $connection->getConfiguration()->getTypes()->get('bar'));
         $this->assertInstanceOf(ArrayType::class, $connection->getConfiguration()->getTypes()->get('array'));
+
+        if (class_exists(LoggerMiddleware::class)) {
+            $middlewares = $connection->getConfiguration()->getMiddlewares();
+            $middlewares = array_values(array_filter($middlewares, function ($middleware) { return $middleware instanceof LoggerMiddleware; }));
+
+            $this->assertNotEmpty($middlewares);
+            $this->assertEquals($middlewares[0]->withConfiguration($connection->getConfiguration()), $middlewares[0]);
+        }
+    }
+
+    public function testMiddlewares()
+    {
+        if (!interface_exists(Middleware::class)) {
+            $this->markTestSkipped('Middlewares are not available');
+        }
+
+        $kernel = new class('test', true) extends Kernel {
+            use \Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+
+            public function registerBundles(): iterable
+            {
+                return [
+                    new FrameworkBundle(),
+                    new PrimeBundle(),
+                ];
+            }
+
+            protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)
+            {
+                $loader->import(__DIR__.'/Fixtures/config_with_middleware.yaml');
+            }
+
+            protected function configureRoutes($routes)
+            {
+            }
+        };
+
+        $kernel->boot();
+
+        /** @var ServiceLocator $prime */
+        $prime = $kernel->getContainer()->get(ServiceLocator::class);
+        /** @var SimpleConnection $connection */
+        $test = $prime->connection('test');
+        $test2 = $prime->connection('test2');
+
+        $testMiddlewares = $test->getConfiguration()->getMiddlewares();
+        $test2Middlewares = $test2->getConfiguration()->getMiddlewares();
+
+        $this->assertContainsOnlyInstancesOf(DummyMiddleware::class, $testMiddlewares);
+        $this->assertContainsOnlyInstancesOf(DummyMiddleware::class, $test2Middlewares);
+
+        $testMiddlewares = array_map(function (DummyMiddleware $middleware) { return $middleware->foo; }, $testMiddlewares);
+        $test2Middlewares = array_map(function (DummyMiddleware $middleware) { return $middleware->foo; }, $test2Middlewares);
+
+        $this->assertEquals(['global2', 'test', 'global', 'global3'], $testMiddlewares);
+        $this->assertEquals(['global2', 'global', 'global3'], $test2Middlewares);
     }
 
     public function testConnectionConfig()

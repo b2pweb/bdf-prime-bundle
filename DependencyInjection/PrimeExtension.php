@@ -8,6 +8,7 @@ use Bdf\Prime\Connection\ConnectionRegistry;
 use Bdf\Prime\Connection\Factory\ConnectionFactory;
 use Bdf\Prime\Connection\Factory\MasterSlaveConnectionFactory;
 use Bdf\Prime\Connection\Factory\ShardingConnectionFactory;
+use Bdf\Prime\Connection\Middleware\LoggerMiddleware;
 use Bdf\Prime\Console\CriteriaCommand;
 use Bdf\Prime\Console\UpgraderCommand;
 use Bdf\Prime\Mapper\ContainerMapperFactory;
@@ -24,6 +25,7 @@ use Bdf\Prime\Schema\StructureUpgraderResolverInterface;
 use Bdf\Prime\ServiceLocator;
 use Bdf\Prime\Shell\PrimeShellCommand;
 use Bdf\Prime\Types\TypesRegistryInterface;
+use Bdf\PrimeBundle\DependencyInjection\Compiler\PrimeMiddlewarePass;
 use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\FileLocator;
@@ -51,6 +53,10 @@ class PrimeExtension extends Extension
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('prime.yaml');
         $loader->load('collector.yaml');
+
+        if (class_exists(LoggerMiddleware::class)) {
+            $loader->load('middlewares.yaml');
+        }
 
         $this->configureConnection($config, $container);
         $this->configureMapperCache($config, $container);
@@ -261,6 +267,7 @@ class PrimeExtension extends Extension
         $configuration = $container->setDefinition("$namespace.configuration", new ChildDefinition(PrimeConfiguration::class));
         $configuration->setPublic(true);
         $configuration->addMethodCall('setTypes', [new Reference("$namespace.types")]);
+        $configuration->addTag('bdf_prime.configuration', ['connection' => $name]);
 
         $typeRegistry = $container->setDefinition("$namespace.types", new ChildDefinition(TypesRegistryInterface::class));
         foreach ($config['types'] as $type => $info) {
@@ -273,7 +280,14 @@ class PrimeExtension extends Extension
 
         $logger = null;
         if ($config['logging']) {
-            $logger = new Reference('prime.logger');
+            // Prime 2.2: Use the logger middleware instead of legacy SQLLogger
+            if ($container->hasDefinition('prime.middleware.logger')) {
+                $container->findDefinition('prime.middleware.logger')
+                    ->addTag(PrimeMiddlewarePass::TAG, ['connection' => $name])
+                ;
+            } else {
+                $logger = new Reference('prime.logger');
+            }
         }
 
         if ($config['profiling']) {
