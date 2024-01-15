@@ -4,16 +4,11 @@ namespace Bdf\PrimeBundle\DependencyInjection\Compiler;
 
 use Doctrine\DBAL\Driver\Middleware;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
-use Symfony\Component\DependencyInjection\Compiler\PriorityTaggedServiceTrait;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-
 use Symfony\Component\DependencyInjection\Reference;
 
-use function interface_exists;
-use function usort;
-
 /**
- * Registers all service tag as middleware into connection configuration
+ * Registers all service tag as middleware into connection configuration.
  */
 class PrimeMiddlewarePass implements CompilerPassInterface
 {
@@ -29,7 +24,7 @@ class PrimeMiddlewarePass implements CompilerPassInterface
     public function process(ContainerBuilder $container)
     {
         // Skip if middleware are not available on the installed version of doctrine/dbal
-        if (!interface_exists(Middleware::class)) {
+        if (!\interface_exists(Middleware::class)) {
             return;
         }
 
@@ -68,7 +63,7 @@ class PrimeMiddlewarePass implements CompilerPassInterface
             $middlewares[] = $middleware;
         }
 
-        usort($middlewares, function ($a, $b) { return $b['priority'] <=> $a['priority']; });
+        \usort($middlewares, function ($a, $b) { return $b['priority'] <=> $a['priority']; });
 
         foreach ($container->findTaggedServiceIds('bdf_prime.configuration') as $id => $tags) {
             $connectionName = $tags[0]['connection'] ?? null;
