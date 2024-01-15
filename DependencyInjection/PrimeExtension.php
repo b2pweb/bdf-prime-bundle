@@ -18,6 +18,7 @@ use Bdf\Prime\Mapper\MapperFactoryInterface;
 use Bdf\Prime\Migration\MigrationManager;
 use Bdf\Prime\MongoDB\Collection\MongoCollectionLocator;
 use Bdf\Prime\MongoDB\Document\DocumentMapperInterface;
+use Bdf\Prime\MongoDB\Driver\MongoConnectionFactory;
 use Bdf\Prime\MongoDB\Schema\CollectionStructureUpgraderResolver;
 use Bdf\Prime\Schema\RepositoryUpgraderResolver;
 use Bdf\Prime\Schema\StructureUpgraderResolverAggregate;
@@ -175,6 +176,12 @@ class PrimeExtension extends Extension
         $container->findDefinition(StructureUpgraderResolverAggregate::class)
             ->addMethodCall('register', [new Reference(CollectionStructureUpgraderResolver::class)])
         ;
+
+        if (\class_exists(MongoConnectionFactory::class)) {
+            $container->register(MongoConnectionFactory::class)
+                ->addTag('bdf_prime.connection_factory', ['priority' => 1])
+            ;
+        }
     }
 
     private function configureUpgrader(array $config, ContainerBuilder $container)
@@ -277,8 +284,16 @@ class PrimeExtension extends Extension
 
         $logger = null;
         if ($config['logging']) {
+            $supportsMiddleware = $container->hasDefinition('prime.middleware.logger');
+
+            // Mongo driver for Prime does not support middleware prior to introduction of MongoConnectionFactory
+            // So we must use the legacy SQLLogger
+            if (\class_exists(MongoCollectionLocator::class) && !$container->hasDefinition(MongoConnectionFactory::class)) {
+                $supportsMiddleware = false;
+            }
+
             // Prime 2.2: Use the logger middleware instead of legacy SQLLogger
-            if ($container->hasDefinition('prime.middleware.logger')) {
+            if ($supportsMiddleware) {
                 $container->findDefinition('prime.middleware.logger')
                     ->addTag(PrimeMiddlewarePass::TAG, ['connection' => $name])
                 ;
