@@ -19,9 +19,6 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  */
 class PrimeBundle extends Bundle
 {
-    /**
-     * {@inheritDoc}
-     */
     public function boot()
     {
         if ($this->container->getParameter('prime.locatorizable')) {
@@ -37,9 +34,6 @@ class PrimeBundle extends Bundle
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function build(ContainerBuilder $container)
     {
         $container->addCompilerPass(new PrimeConnectionFactoryPass());
@@ -47,9 +41,6 @@ class PrimeBundle extends Bundle
         $container->addCompilerPass(new PrimeMiddlewarePass());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function shutdown()
     {
         if ($this->container->initialized('prime')) {

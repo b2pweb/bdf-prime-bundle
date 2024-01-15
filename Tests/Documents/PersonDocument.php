@@ -10,7 +10,7 @@ if (PHP_VERSION_ID >= 70400) {
         public ?string $firstName = null;
         public ?string $lastName = null;
 
-        public function __construct(?string $firstName = null, ?string $lastName = null)
+        public function __construct(string $firstName = null, string $lastName = null)
         {
             $this->firstName = $firstName;
             $this->lastName = $lastName;

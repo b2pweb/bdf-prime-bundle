@@ -31,9 +31,6 @@ class ConfigurationResolver implements ConfigurationResolverInterface
         $this->id = $id;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getConfiguration(string $connectionName): ?Configuration
     {
         try {

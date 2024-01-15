@@ -42,9 +42,6 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class PrimeExtension extends Extension
 {
-    /**
-     * {@inheritDoc}
-     */
     public function load(array $configs, ContainerBuilder $container)
     {
         $configuration = $this->getConfiguration($configs, $container);
@@ -408,9 +405,6 @@ class PrimeExtension extends Extension
         return $options;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getConfiguration(array $config, ContainerBuilder $container)
     {
         return new Configuration($container->getParameter('kernel.debug'));

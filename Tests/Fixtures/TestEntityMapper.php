@@ -6,9 +6,6 @@ use Bdf\Prime\Mapper\Mapper;
 
 class TestEntityMapper extends Mapper
 {
-    /**
-     * {@inheritdoc}
-     */
     public function schema(): array
     {
         return [
@@ -18,9 +15,6 @@ class TestEntityMapper extends Mapper
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function buildFields($builder): void
     {
         $builder
