@@ -303,7 +303,7 @@ class BdfPrimeBundleTest extends TestCase
         $this->assertInstanceOf(BarType::class, $connection->getConfiguration()->getTypes()->get('bar'));
         $this->assertInstanceOf(ArrayType::class, $connection->getConfiguration()->getTypes()->get('array'));
 
-        if (class_exists(LoggerMiddleware::class)) {
+        if (class_exists(LoggerMiddleware::class) && (!class_exists(\Bdf\Prime\MongoDB\Collection\MongoCollectionLocator::class) || class_exists(\Bdf\Prime\MongoDB\Driver\MongoConnectionFactory::class))) {
             $middlewares = $connection->getConfiguration()->getMiddlewares();
             $middlewares = array_values(array_filter($middlewares, function ($middleware) { return $middleware instanceof LoggerMiddleware; }));
 
