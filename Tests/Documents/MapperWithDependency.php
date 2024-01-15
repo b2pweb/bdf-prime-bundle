@@ -11,7 +11,7 @@ if (PHP_VERSION_ID >= 70400) {
     {
         public $locator;
 
-        public function __construct(MongoCollectionLocator $locator, ?DocumentHydratorFactory $hydratorFactory = null)
+        public function __construct(MongoCollectionLocator $locator, DocumentHydratorFactory $hydratorFactory = null)
         {
             parent::__construct(null, $hydratorFactory);
             $this->locator = $locator;
