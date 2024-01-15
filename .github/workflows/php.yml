@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        prime-versions: ['~1.2.0', '~1.3.0', '~2.0.0', '~2.1.0']
+        prime-versions: ['~1.2.0', '~1.3.0', '~2.0.0', '~2.1.0', '~2.2.0']
 
     steps:
     - uses: actions/checkout@v2
