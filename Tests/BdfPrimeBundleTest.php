@@ -192,7 +192,13 @@ class BdfPrimeBundleTest extends TestCase
 
         /** @var SimpleConnection $connection */
         $connection = $prime->connection('test.shard1');
-        $this->assertSame($prime->connection('test')->getConfiguration(), $connection->getConfiguration());
+        $expectedConfig = $prime->connection('test')->getConfiguration();
+
+        if (method_exists($expectedConfig, 'withName')) {
+            $expectedConfig = $expectedConfig->withName('test.shard1');
+        }
+
+        $this->assertEquals($expectedConfig, $connection->getConfiguration());
     }
 
     public function testArrayCache()
