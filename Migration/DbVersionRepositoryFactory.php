@@ -26,7 +26,7 @@ class DbVersionRepositoryFactory
     /**
      * Create the repository instance.
      */
-    public function create(string $tableName, string $connection = null): DbVersionRepository
+    public function create(string $tableName, ?string $connection = null): DbVersionRepository
     {
         return new DbVersionRepository($this->prime->connection($connection), $tableName);
     }
