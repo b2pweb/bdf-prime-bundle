@@ -1,0 +1,44 @@
+prime:
+  activerecord: true
+  logging: false
+  profiling: false
+  auto_commit: false
+  types:
+    - { name: foo, class: \Bdf\PrimeBundle\Tests\FooType }
+    - { name: bar, class: \Bdf\PrimeBundle\Tests\BarType }
+  default_connection: 'test'
+  connections:
+    test:
+      url: 'sqlite::memory:'
+      types:
+        - { name: foo, class: \Bdf\PrimeBundle\Tests\BarType }
+    test2:
+      url: 'sqlite::memory:'
+  migration:
+    connection: 'test'
+    path: '%kernel.project_dir%/src/Migration'
+
+services:
+  global_middleware:
+    class: Bdf\PrimeBundle\Tests\Fixtures\DummyMiddleware
+    arguments: ['global']
+    tags:
+      - bdf_prime.middleware
+
+  global_middleware2:
+    class: Bdf\PrimeBundle\Tests\Fixtures\DummyMiddleware
+    arguments: ['global2']
+    tags:
+      - { name: bdf_prime.middleware, priority: 10 }
+
+  global_middleware3:
+    class: Bdf\PrimeBundle\Tests\Fixtures\DummyMiddleware
+    arguments: ['global3']
+    tags:
+      - { name: bdf_prime.middleware, priority: -10 }
+
+  test_middleware:
+    class: Bdf\PrimeBundle\Tests\Fixtures\DummyMiddleware
+    arguments: ['test']
+    tags:
+      - { name: bdf_prime.middleware, priority: 5, connection: test }

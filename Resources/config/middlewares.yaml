@@ -1,0 +1,7 @@
+services:
+    prime.middleware.logger:
+        class: Bdf\Prime\Connection\Middleware\LoggerMiddleware
+        arguments:
+            - '@?logger'
+        tags:
+            - { name: 'monolog.logger', channel: 'prime' }
