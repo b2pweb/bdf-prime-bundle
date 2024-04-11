@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class PrimeDataCollector extends DoctrineDataCollector
 {
-    public function collect(Request $request, Response $response, \Throwable $exception = null): void
+    public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
     {
         \Symfony\Bridge\Doctrine\DataCollector\DoctrineDataCollector::collect($request, $response, $exception);
 

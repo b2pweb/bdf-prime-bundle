@@ -195,7 +195,6 @@ class BdfPrimeBundleTest extends TestCase
 
         /** @var SimpleConnection $connection */
         $connection = $prime->connection('test.shard1');
-
         $expectedConfig = $prime->connection('test')->getConfiguration();
 
         if (method_exists($expectedConfig, 'withName')) {
