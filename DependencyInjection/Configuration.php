@@ -26,7 +26,7 @@ class Configuration implements ConfigurationInterface
         $this->debug = (bool) $debug;
     }
 
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('prime');
         $node = $treeBuilder->getRootNode();

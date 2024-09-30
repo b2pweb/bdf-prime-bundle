@@ -2,7 +2,7 @@ services:
   Bdf\PrimeBundle\Collector\PrimeDataCollector:
     public: true
     class: 'Bdf\PrimeBundle\Collector\PrimeDataCollector'
-    arguments: ['@Bdf\Prime\Persistence\PrimeManagerRegistry', false]
+    arguments: ['@Bdf\Prime\Persistence\PrimeManagerRegistry', false, null]
     calls:
       - ['addLogger', ['', '@prime.logger.profiling']]
     tags:

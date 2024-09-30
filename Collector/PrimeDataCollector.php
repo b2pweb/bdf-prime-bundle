@@ -3,6 +3,8 @@
 namespace Bdf\PrimeBundle\Collector;
 
 use Doctrine\Bundle\DoctrineBundle\DataCollector\DoctrineDataCollector;
+use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Bridge\Doctrine\Middleware\Debug\DebugDataHolder;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -11,6 +13,15 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class PrimeDataCollector extends DoctrineDataCollector
 {
+    public function __construct(ManagerRegistry $registry, bool $shouldValidateSchema = true, ?DebugDataHolder $debugDataHolder = null)
+    {
+        if (null === $debugDataHolder && \class_exists(DebugDataHolder::class)) {
+            $debugDataHolder = new DebugDataHolder();
+        }
+
+        parent::__construct($registry, $shouldValidateSchema, $debugDataHolder);
+    }
+
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
     {
         \Symfony\Bridge\Doctrine\DataCollector\DoctrineDataCollector::collect($request, $response, $exception);
@@ -31,5 +42,15 @@ class PrimeDataCollector extends DoctrineDataCollector
                 'misses' => [],
             ],
         ];
+    }
+
+    public function addLogger($name, $logger)
+    {
+        // In symfony 7 the addLogger method is removed
+        // So declare it only for BC
+        // New version use DebugDataHolder from the constructor
+        if (\method_exists(parent::class, 'addLogger')) {
+            parent::addLogger($name, $logger);
+        }
     }
 }

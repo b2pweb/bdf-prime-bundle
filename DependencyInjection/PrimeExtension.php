@@ -26,8 +26,11 @@ use Bdf\Prime\Schema\StructureUpgraderResolverInterface;
 use Bdf\Prime\ServiceLocator;
 use Bdf\Prime\Shell\PrimeShellCommand;
 use Bdf\Prime\Types\TypesRegistryInterface;
+use Bdf\PrimeBundle\Collector\PrimeDataCollector;
 use Bdf\PrimeBundle\DependencyInjection\Compiler\PrimeMiddlewarePass;
 use Doctrine\Common\Cache\Psr6\DoctrineProvider;
+use Symfony\Bridge\Doctrine\Middleware\Debug\DebugDataHolder;
+use Symfony\Bridge\Doctrine\Middleware\Debug\Middleware as ProfilingMiddleware;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Config\Loader\FileLoader;
@@ -52,7 +55,7 @@ class PrimeExtension extends Extension
         $loader->load('prime.yaml');
         $loader->load('collector.yaml');
 
-        if (class_exists(LoggerMiddleware::class)) {
+        if (\class_exists(LoggerMiddleware::class)) {
             $loader->load('middlewares.yaml');
         }
 
@@ -64,11 +67,11 @@ class PrimeExtension extends Extension
             $this->configureUpgrader($config, $container);
         }
 
-        if (class_exists(MongoCollectionLocator::class)) {
+        if (\class_exists(MongoCollectionLocator::class)) {
             $this->configureMongo($loader, $container, $config);
         }
 
-        if (class_exists(PrimeShellCommand::class)) {
+        if (\class_exists(PrimeShellCommand::class)) {
             $loader->load('prime_shell.yaml');
         }
 
@@ -209,7 +212,7 @@ class PrimeExtension extends Extension
      */
     private function configurePrime21(ContainerBuilder $container): void
     {
-        if (class_exists(CriteriaCommand::class)) {
+        if (\class_exists(CriteriaCommand::class)) {
             $container->register(CriteriaCommand::class, CriteriaCommand::class)
                 ->addArgument(new Reference(ServiceLocator::class))
                 ->addTag('console.command')
@@ -225,7 +228,7 @@ class PrimeExtension extends Extension
         }
 
         // Use the container mapper factory instead of the legacy one
-        if (class_exists(ContainerMapperFactory::class)) {
+        if (\class_exists(ContainerMapperFactory::class)) {
             $baseArguments = $container->findDefinition(MapperFactory::class)->getArguments();
 
             $container->register(ContainerMapperFactory::class)
@@ -312,6 +315,32 @@ class PrimeExtension extends Extension
                 $logger = new Reference('prime.logger.chain');
             } else {
                 $logger = $profilingLogger;
+            }
+
+            // Symfony 7 : new profiler middleware
+            if (\class_exists(DebugDataHolder::class) && \class_exists(ProfilingMiddleware::class) && $supportsMiddleware) {
+                $dataHolderId = 'prime.debug_data_holder';
+                $dataHolderRef = new Reference($dataHolderId);
+
+                if (!$container->hasDefinition($dataHolderId)) {
+                    $container->register($dataHolderId, DebugDataHolder::class);
+                }
+
+                if (!$container->hasDefinition(ProfilingMiddleware::class)) {
+                    $container->register(ProfilingMiddleware::class, ProfilingMiddleware::class)
+                        ->setArguments([$dataHolderRef, null])
+                    ;
+                }
+
+                $container
+                    ->findDefinition(ProfilingMiddleware::class)
+                    ->addTag(PrimeMiddlewarePass::TAG, ['connection' => $name])
+                ;
+
+                $container
+                    ->findDefinition(PrimeDataCollector::class)
+                    ->setArgument(2, $dataHolderRef)
+                ;
             }
         }
 
