@@ -3,6 +3,7 @@
 namespace Bdf\PrimeBundle\Collector;
 
 use Doctrine\Bundle\DoctrineBundle\DataCollector\DoctrineDataCollector;
+use Doctrine\DBAL\Driver\Middleware as MiddlewareInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bridge\Doctrine\Middleware\Debug\DebugDataHolder;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,7 +16,11 @@ class PrimeDataCollector extends DoctrineDataCollector
 {
     public function __construct(ManagerRegistry $registry, bool $shouldValidateSchema = true, ?DebugDataHolder $debugDataHolder = null)
     {
-        if (null === $debugDataHolder && \class_exists(DebugDataHolder::class)) {
+        if (
+            null === $debugDataHolder
+            && \class_exists(DebugDataHolder::class)
+            && \interface_exists(MiddlewareInterface::class)
+        ) {
             $debugDataHolder = new DebugDataHolder();
         }
 

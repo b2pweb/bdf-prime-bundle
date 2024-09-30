@@ -318,7 +318,7 @@ class PrimeExtension extends Extension
             }
 
             // Symfony 7 : new profiler middleware
-            if (\class_exists(DebugDataHolder::class) && \class_exists(ProfilingMiddleware::class) && $supportsMiddleware) {
+            if ($supportsMiddleware && \class_exists(DebugDataHolder::class) && \class_exists(ProfilingMiddleware::class)) {
                 $dataHolderId = 'prime.debug_data_holder';
                 $dataHolderRef = new Reference($dataHolderId);
 
