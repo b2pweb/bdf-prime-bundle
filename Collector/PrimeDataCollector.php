@@ -3,6 +3,8 @@
 namespace Bdf\PrimeBundle\Collector;
 
 use Bdf\Prime\Connection\Middleware\LoggerMiddleware;
+use Bdf\Prime\MongoDB\Collection\MongoCollectionLocator;
+use Bdf\Prime\MongoDB\Driver\MongoConnectionFactory;
 use Doctrine\Bundle\DoctrineBundle\DataCollector\DoctrineDataCollector;
 use Doctrine\DBAL\Driver\Middleware as MiddlewareInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -23,6 +25,7 @@ class PrimeDataCollector extends DoctrineDataCollector
             && \class_exists(DebugDataHolder::class)
             && \interface_exists(MiddlewareInterface::class)
             && \class_exists(LoggerMiddleware::class)
+            && (!\class_exists(MongoCollectionLocator::class) || \class_exists(MongoConnectionFactory::class))
         ) {
             $debugDataHolder = new DebugDataHolder();
         }
