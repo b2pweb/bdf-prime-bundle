@@ -2,6 +2,7 @@
 
 namespace Bdf\PrimeBundle\Collector;
 
+use Bdf\Prime\Connection\Middleware\LoggerMiddleware;
 use Doctrine\Bundle\DoctrineBundle\DataCollector\DoctrineDataCollector;
 use Doctrine\DBAL\Driver\Middleware as MiddlewareInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -16,10 +17,12 @@ class PrimeDataCollector extends DoctrineDataCollector
 {
     public function __construct(ManagerRegistry $registry, bool $shouldValidateSchema = true, ?DebugDataHolder $debugDataHolder = null)
     {
+        // Only set a default DebugDataHolder if middleware system is available
         if (
             null === $debugDataHolder
             && \class_exists(DebugDataHolder::class)
             && \interface_exists(MiddlewareInterface::class)
+            && \class_exists(LoggerMiddleware::class)
         ) {
             $debugDataHolder = new DebugDataHolder();
         }
