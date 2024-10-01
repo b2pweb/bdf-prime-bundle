@@ -286,15 +286,15 @@ class PrimeExtension extends Extension
         }
 
         $logger = null;
+        $supportsMiddleware = $container->hasDefinition('prime.middleware.logger');
+
+        // Mongo driver for Prime does not support middleware prior to introduction of MongoConnectionFactory
+        // So we must use the legacy SQLLogger
+        if (\class_exists(MongoCollectionLocator::class) && !$container->hasDefinition(MongoConnectionFactory::class)) {
+            $supportsMiddleware = false;
+        }
+
         if ($config['logging']) {
-            $supportsMiddleware = $container->hasDefinition('prime.middleware.logger');
-
-            // Mongo driver for Prime does not support middleware prior to introduction of MongoConnectionFactory
-            // So we must use the legacy SQLLogger
-            if (\class_exists(MongoCollectionLocator::class) && !$container->hasDefinition(MongoConnectionFactory::class)) {
-                $supportsMiddleware = false;
-            }
-
             // Prime 2.2: Use the logger middleware instead of legacy SQLLogger
             if ($supportsMiddleware) {
                 $container->findDefinition('prime.middleware.logger')
