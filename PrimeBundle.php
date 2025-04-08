@@ -9,6 +9,7 @@ use Bdf\Prime\ServiceLocator;
 use Bdf\PrimeBundle\DependencyInjection\Compiler\IgnorePrimeAnnotationsPass;
 use Bdf\PrimeBundle\DependencyInjection\Compiler\PrimeConnectionFactoryPass;
 use Bdf\PrimeBundle\DependencyInjection\Compiler\PrimeMiddlewarePass;
+use Bdf\PrimeBundle\DependencyInjection\Compiler\RegisterClockPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
@@ -39,6 +40,7 @@ class PrimeBundle extends Bundle
         $container->addCompilerPass(new PrimeConnectionFactoryPass());
         $container->addCompilerPass(new IgnorePrimeAnnotationsPass());
         $container->addCompilerPass(new PrimeMiddlewarePass());
+        $container->addCompilerPass(new RegisterClockPass());
     }
 
     public function shutdown()

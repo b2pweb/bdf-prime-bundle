@@ -187,3 +187,44 @@ jobs:
 
     - name: Run test suite
       run: composer run-script tests
+
+  with_clock:
+    name: Compatibility with Prime Shell
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set Timezone
+      uses: szenius/set-timezone@v1.0
+      with:
+        timezoneLinux: "Europe/Paris"
+
+    - name: Install PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 8.3
+        extensions: json
+        ini-values: date.timezone=Europe/Paris
+
+    - uses: mirromutth/mysql-action@v1.1
+      with:
+        mysql version: '5.7'
+        mysql root password: 'root'
+
+    - name: Reset mysql password
+      run: |
+        # To prevent "ERROR 2013 (HY000): Lost connection to MySQL server at 'reading initial communication packet', system error: 0"
+        # See: https://github.com/mirromutth/mysql-action/issues/16
+        sleep 15
+        
+        cat <<EOF | mysql -h 127.0.0.1 -u root --password=root
+          UPDATE mysql.user SET authentication_string = null WHERE user = 'root';
+          FLUSH PRIVILEGES;
+        EOF
+
+    - name: Install symfony clock
+      run: composer require "symfony/clock" --with-all-dependencies
+
+    - name: Run test suite
+      run: composer run-script tests
