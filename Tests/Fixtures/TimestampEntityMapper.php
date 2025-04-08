@@ -3,7 +3,6 @@
 namespace Bdf\PrimeBundle\Tests\Fixtures;
 
 use Bdf\Prime\Behaviors\Timestampable;
-use Bdf\Prime\Mapper\Builder\FieldBuilder;
 use Bdf\Prime\Mapper\Mapper;
 
 class TimestampEntityMapper extends Mapper
@@ -16,7 +15,7 @@ class TimestampEntityMapper extends Mapper
         ];
     }
 
-    public function buildFields(FieldBuilder $builder): void
+    public function buildFields($builder): void
     {
         $builder
             ->integer('id')->autoincrement()
