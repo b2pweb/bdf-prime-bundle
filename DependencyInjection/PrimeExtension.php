@@ -59,10 +59,6 @@ class PrimeExtension extends Extension
             $loader->load('middlewares.yaml');
         }
 
-        $this->configureConnection($config, $container);
-        $this->configureMapperCache($config, $container);
-        $this->configureSerializer($config, $container);
-
         if (interface_exists(StructureUpgraderResolverInterface::class)) {
             $this->configureUpgrader($config, $container);
         }
@@ -70,6 +66,10 @@ class PrimeExtension extends Extension
         if (\class_exists(MongoCollectionLocator::class)) {
             $this->configureMongo($loader, $container, $config);
         }
+
+        $this->configureConnection($config, $container);
+        $this->configureMapperCache($config, $container);
+        $this->configureSerializer($config, $container);
 
         if (\class_exists(PrimeShellCommand::class)) {
             $loader->load('prime_shell.yaml');
