@@ -13,6 +13,9 @@ parameters:
     object:       'Bdf\Prime\Types\ObjectType'
     time:         'Bdf\Prime\Types\TimeType'
     timestamp:    'Bdf\Prime\Types\TimestampType'
+    int_enum:     'Bdf\Prime\Types\BackedEnumType'
+    string_enum:  'Bdf\Prime\Types\BackedEnumType'
+    unit_enum:    'Bdf\Prime\Types\UnitEnumType'
 
 services:
   # Global factory, configurator

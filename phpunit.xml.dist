@@ -17,6 +17,7 @@
     <testsuites>
         <testsuite name="Bdf Serializer bundle Test Suite">
             <directory>./Tests/</directory>
+            <exclude>./Tests/Fixtures</exclude>
         </testsuite>
     </testsuites>
 

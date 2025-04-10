@@ -23,11 +23,16 @@ use Bdf\Prime\Sharding\ShardingConnection;
 use Bdf\Prime\Sharding\ShardingQuery;
 use Bdf\Prime\Types\ArrayType;
 use Bdf\Prime\Types\TypeInterface;
+use Bdf\Prime\Types\UnitEnumType;
 use Bdf\PrimeBundle\Collector\PrimeDataCollector;
 use Bdf\PrimeBundle\DependencyInjection\Compiler\PrimeConnectionFactoryPass;
 use Bdf\PrimeBundle\PrimeBundle;
 use Bdf\PrimeBundle\Tests\Fixtures\A;
 use Bdf\PrimeBundle\Tests\Fixtures\DummyMiddleware;
+use Bdf\PrimeBundle\Tests\Fixtures\Php81\MyIntEnum;
+use Bdf\PrimeBundle\Tests\Fixtures\Php81\MyStringEnum;
+use Bdf\PrimeBundle\Tests\Fixtures\Php81\MyUnitEnum;
+use Bdf\PrimeBundle\Tests\Fixtures\Php81\WithEnumEntity;
 use Bdf\PrimeBundle\Tests\Fixtures\TestEntity;
 use Bdf\PrimeBundle\Tests\Fixtures\TestEntityMapper;
 use Bdf\PrimeBundle\Tests\Fixtures\WithInjection;
@@ -500,6 +505,36 @@ class BdfPrimeBundleTest extends TestCase
 
         $this->assertInstanceOf(A::class, WithInjection::repository()->mapper()->a);
         $this->assertSame('bar', WithInjection::repository()->mapper()->a->foo);
+    }
+
+    public function testEnumTypes()
+    {
+        if (PHP_VERSION_ID < 80100 || !class_exists(UnitEnumType::class)) {
+            $this->markTestSkipped();
+        }
+
+        $kernel = new TestKernel('dev', true);
+        $kernel->boot();
+
+        WithEnumEntity::repository()->schema()->migrate();
+        $e = new WithEnumEntity([
+            'unitEnum' => MyUnitEnum::Foo,
+            'intEnum' => MyIntEnum::Service,
+            'stringEnum' => MyStringEnum::Warning,
+        ]);
+
+        $e->insert();
+
+        $this->assertEquals([
+            [
+                'id' => 1,
+                'intEnum' => 2,
+                'stringEnum' => 'warning',
+                'unitEnum' => 'Foo',
+            ],
+        ], WithEnumEntity::repository()->builder()->execute()->asAssociative()->all());
+
+        $this->assertEquals($e, WithEnumEntity::first());
     }
 
     private function getCommand(Application $console, string $name): Command
