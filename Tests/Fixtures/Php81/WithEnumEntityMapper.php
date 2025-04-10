@@ -15,7 +15,7 @@ class WithEnumEntityMapper extends Mapper
         ];
     }
 
-    public function buildFields(FieldBuilder $builder): void
+    public function buildFields($builder): void
     {
         $builder
             ->integer('id')->autoincrement()
