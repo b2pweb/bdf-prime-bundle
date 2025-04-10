@@ -50,8 +50,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Routing\RouteCollectionBuilder;
 
-use function class_exists;
-
 /**
  * BdfSerializerBundleTest.
  */
@@ -533,7 +531,7 @@ class BdfPrimeBundleTest extends TestCase
                 'intEnum' => 2,
                 'stringEnum' => 'warning',
                 'unitEnum' => 'Foo',
-            ]
+            ],
         ], WithEnumEntity::repository()->builder()->execute()->asAssociative()->all());
 
         $this->assertEquals($e, WithEnumEntity::first());

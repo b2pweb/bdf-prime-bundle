@@ -2,7 +2,6 @@
 
 namespace Bdf\PrimeBundle\Tests\Fixtures\Php81;
 
-use Bdf\Prime\Mapper\Builder\FieldBuilder;
 use Bdf\Prime\Mapper\Mapper;
 
 class WithEnumEntityMapper extends Mapper
