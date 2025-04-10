@@ -23,6 +23,8 @@ services:
     autowire: true
     autoconfigure: true
     resource: './Fixtures'
+    exclude:
+      - './Fixtures/Php81/*Enum.php'
 
   Bdf\PrimeBundle\Tests\Fixtures\A:
     arguments: ['bar']
