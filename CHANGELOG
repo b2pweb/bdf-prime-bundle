@@ -1,3 +1,8 @@
+v1.10.0
+-------
+
+ * Feat: Add `Repository` attribute to inject repository in constructor (SF 7.1 minimum)
+
 v1.9.0
 ------
 
