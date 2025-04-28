@@ -22,6 +22,7 @@ services:
   Bdf\PrimeBundle\Tests\Fixtures\:
     autowire: true
     autoconfigure: true
+    public: true
     resource: './Fixtures'
     exclude:
       - './Fixtures/Php81/*Enum.php'

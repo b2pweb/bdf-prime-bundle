@@ -15,6 +15,7 @@ use Bdf\Prime\Locatorizable;
 use Bdf\Prime\Mapper\ContainerMapperFactory;
 use Bdf\Prime\Migration\MigrationManager;
 use Bdf\Prime\Platform\Sql\Types\SqlStringType;
+use Bdf\Prime\Repository\EntityRepository;
 use Bdf\Prime\Schema\RepositoryUpgrader;
 use Bdf\Prime\Schema\StructureUpgraderResolverAggregate;
 use Bdf\Prime\Schema\StructureUpgraderResolverInterface;
@@ -30,6 +31,7 @@ use Bdf\PrimeBundle\PrimeBundle;
 use Bdf\PrimeBundle\Tests\Fixtures\A;
 use Bdf\PrimeBundle\Tests\Fixtures\DummyMiddleware;
 use Bdf\PrimeBundle\Tests\Fixtures\Php81\MyIntEnum;
+use Bdf\PrimeBundle\Tests\Fixtures\Php81\MyService;
 use Bdf\PrimeBundle\Tests\Fixtures\Php81\MyStringEnum;
 use Bdf\PrimeBundle\Tests\Fixtures\Php81\MyUnitEnum;
 use Bdf\PrimeBundle\Tests\Fixtures\Php81\WithEnumEntity;
@@ -535,6 +537,22 @@ class BdfPrimeBundleTest extends TestCase
         ], WithEnumEntity::repository()->builder()->execute()->asAssociative()->all());
 
         $this->assertEquals($e, WithEnumEntity::first());
+    }
+
+    public function testInjectRepositoryWithAttribute()
+    {
+        if (PHP_VERSION_ID < 80100) {
+            $this->markTestSkipped();
+        }
+
+        $kernel = new TestKernel('dev', true);
+        $kernel->boot();
+
+        /** @var MyService $service */
+        $service = $kernel->getContainer()->get(MyService::class);
+
+        $this->assertInstanceOf(EntityRepository::class, $service->repository);
+        $this->assertSame(TestEntity::class, $service->repository->entityClass());
     }
 
     private function getCommand(Application $console, string $name): Command
