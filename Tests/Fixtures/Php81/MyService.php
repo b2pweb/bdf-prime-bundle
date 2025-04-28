@@ -5,8 +5,9 @@ namespace Bdf\PrimeBundle\Tests\Fixtures\Php81;
 use Bdf\Prime\Repository\EntityRepository;
 use Bdf\PrimeBundle\Attribute\Repository;
 use Bdf\PrimeBundle\Tests\Fixtures\TestEntity;
+use Symfony\Component\DependencyInjection\Attribute\AutowireInline;
 
-if (PHP_VERSION_ID >= 80100) {
+if (PHP_VERSION_ID >= 80100 && class_exists(AutowireInline::class)) {
     class MyService
     {
         /**

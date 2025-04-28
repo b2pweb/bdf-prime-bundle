@@ -47,6 +47,7 @@ use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Command\LazyCommand;
+use Symfony\Component\DependencyInjection\Attribute\AutowireInline;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Kernel;
@@ -541,7 +542,7 @@ class BdfPrimeBundleTest extends TestCase
 
     public function testInjectRepositoryWithAttribute()
     {
-        if (PHP_VERSION_ID < 80100) {
+        if (PHP_VERSION_ID < 80100 || !class_exists(AutowireInline::class)) {
             $this->markTestSkipped();
         }
 
