@@ -22,10 +22,14 @@ services:
   Bdf\PrimeBundle\Tests\Fixtures\:
     autowire: true
     autoconfigure: true
-    public: true
     resource: './Fixtures'
     exclude:
       - './Fixtures/Php81/*Enum.php'
+
+  Bdf\PrimeBundle\Tests\Fixtures\Php81\MyService:
+    autowire: true
+    autoconfigure: true
+    public: true
 
   Bdf\PrimeBundle\Tests\Fixtures\A:
     arguments: ['bar']
