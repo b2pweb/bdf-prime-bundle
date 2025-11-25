@@ -32,7 +32,7 @@ class TestKernel extends \Symfony\Component\HttpKernel\Kernel
         } else {
             $routes->add('index', '/')->controller([$this, 'indexAction']);
 
-            if (file_exists(__DIR__ . '/../vendor/symfony/web-profiler-bundle/Resources/config/routing/wdt.php')) {
+            if (file_exists(__DIR__.'/../vendor/symfony/web-profiler-bundle/Resources/config/routing/wdt.php')) {
                 $routes->import('@WebProfilerBundle/Resources/config/routing/wdt.php');
                 $routes->import('@WebProfilerBundle/Resources/config/routing/profiler.php');
             } else {
