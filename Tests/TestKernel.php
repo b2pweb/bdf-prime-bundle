@@ -31,8 +31,14 @@ class TestKernel extends \Symfony\Component\HttpKernel\Kernel
             $routes->import('@WebProfilerBundle/Resources/config/routing/profiler.xml', '/_profiler');
         } else {
             $routes->add('index', '/')->controller([$this, 'indexAction']);
-            $routes->import('@WebProfilerBundle/Resources/config/routing/wdt.xml');
-            $routes->import('@WebProfilerBundle/Resources/config/routing/profiler.xml');
+
+            if (file_exists(__DIR__ . '/../vendor/symfony/web-profiler-bundle/Resources/config/routing/wdt.php')) {
+                $routes->import('@WebProfilerBundle/Resources/config/routing/wdt.php');
+                $routes->import('@WebProfilerBundle/Resources/config/routing/profiler.php');
+            } else {
+                $routes->import('@WebProfilerBundle/Resources/config/routing/wdt.xml');
+                $routes->import('@WebProfilerBundle/Resources/config/routing/profiler.xml');
+            }
         }
     }
 

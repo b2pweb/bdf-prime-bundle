@@ -20,7 +20,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  */
 class PrimeBundle extends Bundle
 {
-    public function boot()
+    public function boot(): void
     {
         if ($this->container->getParameter('prime.locatorizable')) {
             Locatorizable::configure(function () {
@@ -35,7 +35,7 @@ class PrimeBundle extends Bundle
         }
     }
 
-    public function build(ContainerBuilder $container)
+    public function build(ContainerBuilder $container): void
     {
         $container->addCompilerPass(new PrimeConnectionFactoryPass());
         $container->addCompilerPass(new IgnorePrimeAnnotationsPass());
@@ -43,7 +43,7 @@ class PrimeBundle extends Bundle
         $container->addCompilerPass(new RegisterClockPass());
     }
 
-    public function shutdown()
+    public function shutdown(): void
     {
         if ($this->container->initialized('prime')) {
             /** @var ServiceLocator $prime */

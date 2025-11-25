@@ -50,6 +50,7 @@ use Symfony\Component\Console\Command\LazyCommand;
 use Symfony\Component\DependencyInjection\Attribute\AutowireInline;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Routing\RouteCollectionBuilder;
 
@@ -102,7 +103,7 @@ class BdfPrimeBundleTest extends TestCase
         $reflection = new \ReflectionClass(UpgraderCommand::class);
         if ($reflection->hasProperty('migrationManager')) {
             $prop = $reflection->getProperty('migrationManager');
-            $prop->setAccessible(true);
+            PHP_VERSION_ID >= 80100 or $prop->setAccessible(true);
             $this->assertSame($kernel->getContainer()->get(MigrationManager::class), $prop->getValue($this->getCommand($console, 'prime:upgrade')));
         }
     }
@@ -126,7 +127,7 @@ class BdfPrimeBundleTest extends TestCase
         $command = $this->getCommand($console, UpgraderCommand::getDefaultName());
 
         $r = new \ReflectionProperty($command, 'resolver');
-        $r->setAccessible(true);
+        PHP_VERSION_ID >= 80100 or $r->setAccessible(true);
 
         $this->assertSame(
             $kernel->getContainer()->get(StructureUpgraderResolverAggregate::class),
@@ -149,7 +150,7 @@ class BdfPrimeBundleTest extends TestCase
         $collector = $kernel->getContainer()->get(PrimeDataCollector::class);
 
         $this->assertInstanceOf(PrimeDataCollector::class, $collector);
-        $kernel->handle(Request::create('http://127.0.0.1/'));
+        $kernel->handle(Request::create('http://127.0.0.1/'), HttpKernelInterface::MAIN_REQUEST, false);
 
         $this->assertGreaterThanOrEqual(3, $collector->getQueryCount());
 

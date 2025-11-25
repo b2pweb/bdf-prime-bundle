@@ -102,7 +102,7 @@ class WithMongoTest extends TestCase
         $c2->mapper()->fromDatabase([], $c1->connection()->platform()->types());
 
         $r = new \ReflectionProperty(DocumentMapper::class, 'hydrator');
-        $r->setAccessible(true);
+        PHP_VERSION_ID >= 80100 or $r->setAccessible(true);
 
         $this->assertSame($r->getValue($c1->mapper()), $r->getValue($c2->mapper()));
     }
