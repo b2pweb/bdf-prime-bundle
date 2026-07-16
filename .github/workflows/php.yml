@@ -6,10 +6,6 @@ on:
   pull_request:
     branches: [ master ]
 
-# Old versions requires to disable the insecure audit block, otherwise composer will fail to install dependencies
-env:
-  COMPOSER_NO_BLOCKING: 0
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -56,7 +52,7 @@ jobs:
       run: composer validate --strict
 
     - name: Install dependencies
-      run: composer install --prefer-dist --no-progress
+      run: composer install --no-blocking --prefer-dist --no-progress
 
     - name: Run test suite
       run: composer run-script tests
@@ -117,7 +113,7 @@ jobs:
         EOF
 
     - name: Install prime ${{ matrix.versions.prime }}
-      run: composer require "b2pweb/bdf-prime:${{ matrix.versions.prime }}" --with-all-dependencies
+      run: composer require --no-blocking "b2pweb/bdf-prime:${{ matrix.versions.prime }}" --with-all-dependencies
 
     - name: Run test suite
       run: composer run-script tests
@@ -161,7 +157,7 @@ jobs:
       uses: supercharge/mongodb-github-action@1.7.0
 
     - name: Install mongo driver
-      run: composer require "b2pweb/bdf-prime-mongodb:~2.0" --with-all-dependencies
+      run: composer require --no-blocking "b2pweb/bdf-prime-mongodb:~2.0" --with-all-dependencies
 
     - name: Run test suite
       run: composer run-script tests
@@ -205,7 +201,7 @@ jobs:
       uses: supercharge/mongodb-github-action@1.7.0
 
     - name: Install mongo driver
-      run: composer require "b2pweb/bdf-prime-shell" --with-all-dependencies
+      run: composer require --no-blocking "b2pweb/bdf-prime-shell" --with-all-dependencies
 
     - name: Run test suite
       run: composer run-script tests
@@ -246,7 +242,7 @@ jobs:
         EOF
 
     - name: Install symfony clock
-      run: composer require "symfony/clock" --with-all-dependencies
+      run: composer require --no-blocking "symfony/clock" --with-all-dependencies
 
     - name: Run test suite
       run: composer run-script tests
