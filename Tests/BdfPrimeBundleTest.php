@@ -648,7 +648,7 @@ class OverriddenString extends AbstractPlatformType
     /**
      * {@inheritdoc}
      */
-    public function __construct(PlatformInterface $platform, string $name = self::STRING)
+    public function __construct(PlatformInterface $platform, $name = self::STRING)
     {
         parent::__construct($platform, $name);
     }
