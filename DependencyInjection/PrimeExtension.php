@@ -43,9 +43,6 @@ use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 
-use function class_exists;
-use function method_exists;
-
 /**
  * PrimeExtension.
  */
@@ -261,18 +258,18 @@ class PrimeExtension extends Extension
     }
 
     /**
-     * Register CLI commands deleted from prime 3.0, if exists
+     * Register CLI commands deleted from prime 3.0, if exists.
      */
     private function configureLegacyCommands(ContainerBuilder $container): void
     {
-        if (class_exists('Bdf\Prime\Console\GraphCommand')) {
+        if (\class_exists('Bdf\Prime\Console\GraphCommand')) {
             $container->register('prime.graph_command', 'Bdf\Prime\Console\GraphCommand')
                 ->addArgument(new Reference(ServiceLocator::class))
                 ->addTag('console.command')
             ;
         }
 
-        if (class_exists('Bdf\Prime\Console\MapperCommand')) {
+        if (\class_exists('Bdf\Prime\Console\MapperCommand')) {
             $container->register('prime.mapper_command', 'Bdf\Prime\Console\MapperCommand')
                 ->addArgument(new Reference(ServiceLocator::class))
                 ->addTag('console.command')
@@ -282,7 +279,7 @@ class PrimeExtension extends Extension
 
     private function configureCollector(ContainerBuilder $container): void
     {
-        if (class_exists('Doctrine\DBAL\Logging\DebugStack')) {
+        if (\class_exists('Doctrine\DBAL\Logging\DebugStack')) {
             $container->getDefinition(PrimeDataCollector::class)
                 ->addMethodCall('addLogger', ['', new Reference('prime.logger.profiling')])
             ;
@@ -323,7 +320,7 @@ class PrimeExtension extends Extension
 
         $logger = null;
         $supportsMiddleware = $container->hasDefinition('prime.middleware.logger');
-        $supportsLegacySqlLogger = method_exists(PrimeConfiguration::class, 'setSQLLogger');
+        $supportsLegacySqlLogger = \method_exists(PrimeConfiguration::class, 'setSQLLogger');
 
         // Mongo driver for Prime does not support middleware prior to introduction of MongoConnectionFactory
         // So we must use the legacy SQLLogger
@@ -426,7 +423,7 @@ class PrimeExtension extends Extension
 
         if (isset($config['pool'])) {
             if (!$container->has($namespace)) {
-                if (class_exists(DoctrineCacheAdapter::class)) {
+                if (\class_exists(DoctrineCacheAdapter::class)) {
                     $definition = $container->register($namespace.'.doctrine-provider', DoctrineProvider::class);
                     $definition->setFactory([DoctrineProvider::class, 'wrap']);
                     $definition->addArgument(new Reference($config['pool']));
