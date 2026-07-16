@@ -61,7 +61,23 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        prime-versions: ['~1.2.0', '~1.3.0', '~2.0.0', '~2.1.0', '~2.2.0']
+        versions:
+          - prime: '~1.2.0'
+            php: '8.0'
+          - prime: '~1.3.0'
+            php: '8.0'
+          - prime: '~2.0.0'
+            php: '8.0'
+          - prime: '~2.1.0'
+            php: '8.0'
+          - prime: '~2.2.0'
+            php: '8.0'
+          - prime: '~2.3.0'
+            php: '8.1'
+          - prime: '~3.0.0'
+            php: '8.4'
+          - prime: 'dev-chore-FRAM-232-modernize-code as 3.0.0'
+            php: '8.4'
 
     steps:
     - uses: actions/checkout@v2
@@ -74,7 +90,7 @@ jobs:
     - name: Install PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: 8.0
+        php-version: ${{ matrix.versions.php }}
         extensions: json
         ini-values: date.timezone=Europe/Paris
 
@@ -94,8 +110,8 @@ jobs:
           FLUSH PRIVILEGES;
         EOF
 
-    - name: Install prime ${{ matrix.prime-versions }}
-      run: composer require "b2pweb/bdf-prime:${{ matrix.prime-versions }}" --with-all-dependencies
+    - name: Install prime ${{ matrix.versions.prime }}
+      run: composer require "b2pweb/bdf-prime:${{ matrix.versions.prime }}" --with-all-dependencies
 
     - name: Run test suite
       run: composer run-script tests

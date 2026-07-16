@@ -3,8 +3,6 @@ services:
     public: true
     class: 'Bdf\PrimeBundle\Collector\PrimeDataCollector'
     arguments: ['@Bdf\Prime\Persistence\PrimeManagerRegistry', false, null]
-    calls:
-      - ['addLogger', ['', '@prime.logger.profiling']]
     tags:
       - { name: 'data_collector', template: '@Doctrine/Collector/db.html.twig', id: 'db', 'priority': 250 }
 

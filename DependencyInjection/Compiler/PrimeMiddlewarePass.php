@@ -21,7 +21,7 @@ class PrimeMiddlewarePass implements CompilerPassInterface
         $this->tag = $loaderTag;
     }
 
-    public function process(ContainerBuilder $container)
+    public function process(ContainerBuilder $container): void
     {
         // Skip if middleware are not available on the installed version of doctrine/dbal
         if (!\interface_exists(Middleware::class)) {
