@@ -8,7 +8,7 @@ on:
 
 # Old versions requires to disable the insecure audit block, otherwise composer will fail to install dependencies
 env:
-  COMPOSER_AUDIT_BLOCK_INSECURE: 0
+  COMPOSER_NO_BLOCKING: 0
 
 jobs:
   build:
