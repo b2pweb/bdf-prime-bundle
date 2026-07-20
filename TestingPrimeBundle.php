@@ -13,13 +13,13 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  */
 class TestingPrimeBundle extends Bundle
 {
-    public function boot()
+    public function boot(): void
     {
         Prime::configure($this->container);
         TestPack::pack()->initialize();
     }
 
-    public function shutdown()
+    public function shutdown(): void
     {
         TestPack::pack()->clear();
         TestPack::pack()->destroy();
