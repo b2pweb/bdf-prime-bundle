@@ -199,25 +199,11 @@ services:
     tags:
       - { name: 'console.command' }
 
-  prime.graph_command:
-    class: 'Bdf\Prime\Console\GraphCommand'
-    arguments:
-      - '@prime'
-    tags:
-      - { name: 'console.command' }
-
   prime.hydrator_command:
     class: 'Bdf\Prime\Console\HydratorGenerationCommand'
     arguments:
       - '@prime'
       - '%prime.hydrators%'
-    tags:
-      - { name: 'console.command' }
-
-  prime.mapper_command:
-    class: 'Bdf\Prime\Console\MapperCommand'
-    arguments:
-      - '@prime'
     tags:
       - { name: 'console.command' }
 

@@ -2,6 +2,7 @@
 
 namespace Bdf\PrimeBundle\DependencyInjection;
 
+use Bdf\Prime\Cache\CachePoolAdapter;
 use Bdf\Prime\Cache\DoctrineCacheAdapter;
 use Bdf\Prime\Configuration as PrimeConfiguration;
 use Bdf\Prime\Connection\ConnectionRegistry;
@@ -32,6 +33,7 @@ use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Symfony\Bridge\Doctrine\Middleware\Debug\DebugDataHolder;
 use Symfony\Bridge\Doctrine\Middleware\Debug\Middleware as ProfilingMiddleware;
 use Symfony\Component\Cache\Psr16Cache;
+use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Config\Loader\FileLoader;
 use Symfony\Component\DependencyInjection\ChildDefinition;
@@ -46,7 +48,7 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class PrimeExtension extends Extension
 {
-    public function load(array $configs, ContainerBuilder $container)
+    public function load(array $configs, ContainerBuilder $container): void
     {
         $configuration = $this->getConfiguration($configs, $container);
         $config = $this->processConfiguration($configuration, $configs);
@@ -54,6 +56,7 @@ class PrimeExtension extends Extension
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('prime.yaml');
         $loader->load('collector.yaml');
+        $this->configureCollector($container);
 
         if (\class_exists(LoggerMiddleware::class)) {
             $loader->load('middlewares.yaml');
@@ -83,6 +86,7 @@ class PrimeExtension extends Extension
         $container->setParameter('prime.locatorizable', $config['activerecord']);
 
         $this->configurePrime21($container);
+        $this->configureLegacyCommands($container);
     }
 
     public function configureConnection(array $config, ContainerBuilder $container)
@@ -253,6 +257,35 @@ class PrimeExtension extends Extension
         }
     }
 
+    /**
+     * Register CLI commands deleted from prime 3.0, if exists.
+     */
+    private function configureLegacyCommands(ContainerBuilder $container): void
+    {
+        if (\class_exists('Bdf\Prime\Console\GraphCommand')) {
+            $container->register('prime.graph_command', 'Bdf\Prime\Console\GraphCommand')
+                ->addArgument(new Reference(ServiceLocator::class))
+                ->addTag('console.command')
+            ;
+        }
+
+        if (\class_exists('Bdf\Prime\Console\MapperCommand')) {
+            $container->register('prime.mapper_command', 'Bdf\Prime\Console\MapperCommand')
+                ->addArgument(new Reference(ServiceLocator::class))
+                ->addTag('console.command')
+            ;
+        }
+    }
+
+    private function configureCollector(ContainerBuilder $container): void
+    {
+        if (\class_exists('Doctrine\DBAL\Logging\DebugStack')) {
+            $container->getDefinition(PrimeDataCollector::class)
+                ->addMethodCall('addLogger', ['', new Reference('prime.logger.profiling')])
+            ;
+        }
+    }
+
     public function mergeConfiguration(array $globalConfig, array $config): array
     {
         return [
@@ -287,6 +320,7 @@ class PrimeExtension extends Extension
 
         $logger = null;
         $supportsMiddleware = $container->hasDefinition('prime.middleware.logger');
+        $supportsLegacySqlLogger = \method_exists(PrimeConfiguration::class, 'setSQLLogger');
 
         // Mongo driver for Prime does not support middleware prior to introduction of MongoConnectionFactory
         // So we must use the legacy SQLLogger
@@ -306,15 +340,17 @@ class PrimeExtension extends Extension
         }
 
         if ($config['profiling']) {
-            $profilingLogger = new Reference('prime.logger.profiling');
+            if ($supportsLegacySqlLogger) {
+                $profilingLogger = new Reference('prime.logger.profiling');
 
-            if (null !== $logger) {
-                $chainLogger = $container->findDefinition('prime.logger.chain');
-                $chainLogger->replaceArgument(0, [$logger, $profilingLogger]);
+                if (null !== $logger) {
+                    $chainLogger = $container->findDefinition('prime.logger.chain');
+                    $chainLogger->replaceArgument(0, [$logger, $profilingLogger]);
 
-                $logger = new Reference('prime.logger.chain');
-            } else {
-                $logger = $profilingLogger;
+                    $logger = new Reference('prime.logger.chain');
+                } else {
+                    $logger = $profilingLogger;
+                }
             }
 
             // Symfony 7 : new profiler middleware
@@ -344,7 +380,7 @@ class PrimeExtension extends Extension
             }
         }
 
-        if ($logger) {
+        if ($logger && $supportsLegacySqlLogger) {
             $configuration->addMethodCall('setSQLLogger', [$logger]);
         }
 
@@ -387,12 +423,17 @@ class PrimeExtension extends Extension
 
         if (isset($config['pool'])) {
             if (!$container->has($namespace)) {
-                $definition = $container->register($namespace.'.doctrine-provider', DoctrineProvider::class);
-                $definition->setFactory([DoctrineProvider::class, 'wrap']);
-                $definition->addArgument(new Reference($config['pool']));
+                if (\class_exists(DoctrineCacheAdapter::class)) {
+                    $definition = $container->register($namespace.'.doctrine-provider', DoctrineProvider::class);
+                    $definition->setFactory([DoctrineProvider::class, 'wrap']);
+                    $definition->addArgument(new Reference($config['pool']));
 
-                $definition = $container->register($namespace, DoctrineCacheAdapter::class);
-                $definition->addArgument(new Reference($namespace.'.doctrine-provider'));
+                    $definition = $container->register($namespace, DoctrineCacheAdapter::class);
+                    $definition->addArgument(new Reference($namespace.'.doctrine-provider'));
+                } else {
+                    $definition = $container->register($namespace, CachePoolAdapter::class);
+                    $definition->addArgument(new Reference($config['pool']));
+                }
             }
 
             return new Reference($namespace);
@@ -449,7 +490,7 @@ class PrimeExtension extends Extension
         return $options;
     }
 
-    public function getConfiguration(array $config, ContainerBuilder $container)
+    public function getConfiguration(array $config, ContainerBuilder $container): ?ConfigurationInterface
     {
         return new Configuration($container->getParameter('kernel.debug'));
     }

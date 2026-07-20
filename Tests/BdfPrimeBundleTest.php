@@ -5,6 +5,7 @@ namespace Bdf\PrimeBundle\Tests;
 require_once __DIR__.'/TestKernel.php';
 
 use Bdf\Prime\Cache\ArrayCache;
+use Bdf\Prime\Cache\CachePoolAdapter;
 use Bdf\Prime\Cache\DoctrineCacheAdapter;
 use Bdf\Prime\Configuration;
 use Bdf\Prime\Connection\Middleware\LoggerMiddleware;
@@ -14,8 +15,10 @@ use Bdf\Prime\Console\UpgraderCommand;
 use Bdf\Prime\Locatorizable;
 use Bdf\Prime\Mapper\ContainerMapperFactory;
 use Bdf\Prime\Migration\MigrationManager;
-use Bdf\Prime\Platform\Sql\Types\SqlStringType;
+use Bdf\Prime\Platform\AbstractPlatformType;
+use Bdf\Prime\Platform\PlatformInterface;
 use Bdf\Prime\Repository\EntityRepository;
+use Bdf\Prime\Schema\ColumnInterface;
 use Bdf\Prime\Schema\RepositoryUpgrader;
 use Bdf\Prime\Schema\StructureUpgraderResolverAggregate;
 use Bdf\Prime\Schema\StructureUpgraderResolverInterface;
@@ -23,6 +26,7 @@ use Bdf\Prime\ServiceLocator;
 use Bdf\Prime\Sharding\ShardingConnection;
 use Bdf\Prime\Sharding\ShardingQuery;
 use Bdf\Prime\Types\ArrayType;
+use Bdf\Prime\Types\PhpTypeInterface;
 use Bdf\Prime\Types\TypeInterface;
 use Bdf\Prime\Types\UnitEnumType;
 use Bdf\PrimeBundle\Collector\PrimeDataCollector;
@@ -40,6 +44,7 @@ use Bdf\PrimeBundle\Tests\Fixtures\TestEntityMapper;
 use Bdf\PrimeBundle\Tests\Fixtures\WithInjection;
 use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Doctrine\DBAL\Driver\Middleware;
+use Doctrine\DBAL\Types\Types;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
@@ -96,7 +101,7 @@ class BdfPrimeBundleTest extends TestCase
 
         $this->assertInstanceOf(UpgraderCommand::class, $this->getCommand($console, 'prime:upgrade'));
 
-        if (class_exists(CriteriaCommand::class)) {
+        if (\class_exists(CriteriaCommand::class)) {
             $this->assertInstanceOf(CriteriaCommand::class, $this->getCommand($console, 'prime:criteria'));
         }
 
@@ -124,7 +129,7 @@ class BdfPrimeBundleTest extends TestCase
         $this->assertInstanceOf(StructureUpgraderResolverAggregate::class, $kernel->getContainer()->get(StructureUpgraderResolverAggregate::class));
 
         $console = new Application($kernel);
-        $command = $this->getCommand($console, UpgraderCommand::getDefaultName());
+        $command = $this->getCommand($console, 'prime:upgrade');
 
         $r = new \ReflectionProperty($command, 'resolver');
         PHP_VERSION_ID >= 80100 or $r->setAccessible(true);
@@ -206,7 +211,7 @@ class BdfPrimeBundleTest extends TestCase
         $connection = $prime->connection('test.shard1');
         $expectedConfig = $prime->connection('test')->getConfiguration();
 
-        if (method_exists($expectedConfig, 'withName')) {
+        if (\method_exists($expectedConfig, 'withName')) {
             $expectedConfig = $expectedConfig->withName('test.shard1');
         }
 
@@ -272,7 +277,12 @@ class BdfPrimeBundleTest extends TestCase
 
         /** @var ServiceLocator $prime */
         $prime = $kernel->getContainer()->get(ServiceLocator::class);
-        $this->assertEquals(new DoctrineCacheAdapter(DoctrineProvider::wrap(new FilesystemAdapter())), $prime->mappers()->getResultCache());
+
+        if (\class_exists(DoctrineCacheAdapter::class)) {
+            $this->assertEquals(new DoctrineCacheAdapter(DoctrineProvider::wrap(new FilesystemAdapter())), $prime->mappers()->getResultCache());
+        } else {
+            $this->assertEquals(new CachePoolAdapter(new FilesystemAdapter()), $prime->mappers()->getResultCache());
+        }
     }
 
     public function testGlobalConfig()
@@ -305,15 +315,18 @@ class BdfPrimeBundleTest extends TestCase
         /** @var SimpleConnection $connection */
         $connection = $prime->connection('test2');
 
-        $this->assertNotNull($connection->getConfiguration()->getSQLLogger());
+        if (\method_exists($connection->getConfiguration(), 'getSQLLogger')) {
+            $this->assertNotNull($connection->getConfiguration()->getSQLLogger());
+        }
+
         $this->assertTrue($connection->getConfiguration()->getAutoCommit());
         $this->assertInstanceOf(FooType::class, $connection->getConfiguration()->getTypes()->get('foo'));
         $this->assertInstanceOf(BarType::class, $connection->getConfiguration()->getTypes()->get('bar'));
         $this->assertInstanceOf(ArrayType::class, $connection->getConfiguration()->getTypes()->get('array'));
 
-        if (class_exists(LoggerMiddleware::class) && (!class_exists(\Bdf\Prime\MongoDB\Collection\MongoCollectionLocator::class) || class_exists(\Bdf\Prime\MongoDB\Driver\MongoConnectionFactory::class))) {
+        if (\class_exists(LoggerMiddleware::class) && (!\class_exists(\Bdf\Prime\MongoDB\Collection\MongoCollectionLocator::class) || \class_exists(\Bdf\Prime\MongoDB\Driver\MongoConnectionFactory::class))) {
             $middlewares = $connection->getConfiguration()->getMiddlewares();
-            $middlewares = array_values(array_filter($middlewares, function ($middleware) { return $middleware instanceof LoggerMiddleware; }));
+            $middlewares = \array_values(\array_filter($middlewares, function ($middleware) { return $middleware instanceof LoggerMiddleware; }));
 
             $this->assertNotEmpty($middlewares);
             $this->assertEquals($middlewares[0]->withConfiguration($connection->getConfiguration()), $middlewares[0]);
@@ -398,11 +411,20 @@ class BdfPrimeBundleTest extends TestCase
         /** @var SimpleConnection $connection */
         $connection = $prime->connection('test');
 
-        $this->assertNull($connection->getConfiguration()->getSQLLogger());
+        if (\method_exists($connection->getConfiguration(), 'getSQLLogger')) {
+            $this->assertNull($connection->getConfiguration()->getSQLLogger());
+        }
+
         $this->assertFalse($connection->getConfiguration()->getAutoCommit());
         $this->assertInstanceOf(BarType::class, $connection->getConfiguration()->getTypes()->get('foo'));
         $this->assertInstanceOf(BarType::class, $connection->getConfiguration()->getTypes()->get('bar'));
         $this->assertInstanceOf(ArrayType::class, $connection->getConfiguration()->getTypes()->get('array'));
+
+        if (\class_exists(LoggerMiddleware::class) && (!\class_exists(\Bdf\Prime\MongoDB\Collection\MongoCollectionLocator::class) || \class_exists(\Bdf\Prime\MongoDB\Driver\MongoConnectionFactory::class))) {
+            $middlewares = $connection->getConfiguration()->getMiddlewares();
+            $middlewares = \array_values(\array_filter($middlewares, function ($middleware) { return $middleware instanceof LoggerMiddleware; }));
+            $this->assertEmpty($middlewares);
+        }
     }
 
     /**
@@ -437,7 +459,7 @@ class BdfPrimeBundleTest extends TestCase
     {
         $this->expectExceptionMessage('Define platform types is only supported by bdf-prime version >= 2.1');
 
-        if (method_exists(Configuration::class, 'addPlatformType')) {
+        if (\method_exists(Configuration::class, 'addPlatformType')) {
             $this->markTestSkipped();
         }
 
@@ -467,7 +489,7 @@ class BdfPrimeBundleTest extends TestCase
 
     public function testCustomPlatformTypes()
     {
-        if (!method_exists(Configuration::class, 'addPlatformType')) {
+        if (!\method_exists(Configuration::class, 'addPlatformType')) {
             $this->markTestSkipped();
         }
 
@@ -500,7 +522,7 @@ class BdfPrimeBundleTest extends TestCase
 
     public function testMapperDependencyInjection()
     {
-        if (!class_exists(ContainerMapperFactory::class)) {
+        if (!\class_exists(ContainerMapperFactory::class)) {
             $this->markTestSkipped('ContainerMapperFactory is not available');
         }
 
@@ -513,7 +535,7 @@ class BdfPrimeBundleTest extends TestCase
 
     public function testEnumTypes()
     {
-        if (PHP_VERSION_ID < 80100 || !class_exists(UnitEnumType::class)) {
+        if (PHP_VERSION_ID < 80100 || !\class_exists(UnitEnumType::class)) {
             $this->markTestSkipped();
         }
 
@@ -543,7 +565,7 @@ class BdfPrimeBundleTest extends TestCase
 
     public function testInjectRepositoryWithAttribute()
     {
-        if (PHP_VERSION_ID < 80100 || !class_exists(AutowireInline::class)) {
+        if (PHP_VERSION_ID < 80100 || !\class_exists(AutowireInline::class)) {
             $this->markTestSkipped();
         }
 
@@ -614,10 +636,30 @@ class BarType implements TypeInterface
     }
 }
 
-class OverriddenString extends SqlStringType
+class OverriddenString extends AbstractPlatformType
 {
-    public function toDatabase($value)
+    public function __construct(PlatformInterface $platform, $name = self::STRING)
+    {
+        parent::__construct($platform, $name);
+    }
+
+    public function toDatabase($value): string
     {
         return 'foo';
+    }
+
+    public function fromDatabase($value, array $fieldOptions = []): ?string
+    {
+        return null === $value ? null : (string) $value;
+    }
+
+    public function declaration(ColumnInterface $column): string
+    {
+        return Types::STRING;
+    }
+
+    public function phpType(): string
+    {
+        return PhpTypeInterface::STRING;
     }
 }

@@ -11,7 +11,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  */
 class IgnorePrimeAnnotationsPass implements CompilerPassInterface
 {
-    public function process(ContainerBuilder $container)
+    public function process(ContainerBuilder $container): void
     {
         if (!class_exists(AnnotationReader::class)) {
             return;
