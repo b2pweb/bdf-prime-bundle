@@ -154,7 +154,7 @@ class BdfPrimeBundleTest extends TestCase
 
         $this->assertGreaterThanOrEqual(3, $collector->getQueryCount());
 
-        $queries = array_map(function ($entry) { return $entry['sql']; }, $collector->getQueries()[''] ?? $collector->getQueries()['default']);
+        $queries = array_map(function ($entry) { return $entry['sql']; }, $collector->getQueries()[''] ?? $collector->getQueries()['test']);
         $this->assertContains('SELECT * FROM test_ WHERE id = ? LIMIT 1', $queries);
     }
 
