@@ -327,7 +327,7 @@ class PrimeExtension extends Extension
                 }
 
                 $container
-                    ->register('prime.debug_middleware.' . $name, ProfilingMiddleware::class)
+                    ->register('prime.debug_middleware.'.$name, ProfilingMiddleware::class)
                     ->setArguments([$dataHolderRef, null, $name])
                     ->addTag(PrimeMiddlewarePass::TAG, ['connection' => $name])
                 ;
